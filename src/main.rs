@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+mod camera;
+
 fn main() {
     App::new()
         .add_plugins((
@@ -8,5 +10,30 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
         ))
+        .add_plugins(camera::ControllableCameraPlugin)
+        .add_systems(Startup, setup_demo_scene)
         .run();
+}
+
+fn setup_demo_scene(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // spawn in lights
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
+
+    // ground plane
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(shape::Plane::from_size(10.0).into()),
+        material: materials.add(Color::DARK_GREEN.into()),
+        ..default()
+    });
 }
