@@ -1,6 +1,8 @@
 use bevy::{
+    ecs::system::SystemParam,
     input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
+    window::PrimaryWindow,
 };
 use bevy_rapier3d::prelude::*;
 
@@ -105,4 +107,45 @@ fn handle_camera(
 
     // TEMP - to show the location of the controller's pivot point
     gizmos.sphere(controller.pivot, Quat::IDENTITY, 0.1, Color::WHITE);
+}
+
+/// System parameter to get the location of the cursor projected into the world
+#[derive(SystemParam)]
+pub struct CursorRaycast<'w, 's> {
+    main_camera: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<CameraController>>,
+    main_window: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+    rapier: Res<'w, RapierContext>,
+}
+
+impl<'w, 's> CursorRaycast<'w, 's> {
+    /// Cast a ray from the camera at the cursor location into the world
+    ///
+    /// Returns the first entity hit and the location of the hit, if a hit occurs
+    pub fn raycast(&self) -> Option<(Entity, Vec3)> {
+        let (camera, camera_transform) = self.main_camera.single();
+        let window = self.main_window.single();
+
+        // get ray from camera's perspective to cursor point
+        let ray = camera.viewport_to_world(camera_transform, window.cursor_position()?)?;
+
+        // cast the ray
+        let (entity, distance) = self.rapier.cast_ray(
+            ray.origin,
+            ray.direction,
+            f32::MAX,
+            false,
+            QueryFilter::default(),
+        )?;
+
+        // if everything worked, return the entity and distance to the collision point
+        Some((entity, ray.get_point(distance)))
+    }
+
+    /// Do raycast, but only return location of the hit, if it occurs
+    pub fn point(&self) -> Option<Vec3> {
+        match self.raycast() {
+            Some((_, point)) => Some(point),
+            None => None,
+        }
+    }
 }

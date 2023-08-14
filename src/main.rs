@@ -31,9 +31,13 @@ fn setup_demo_scene(
     });
 
     // ground plane
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(10.0).into()),
-        material: materials.add(Color::DARK_GREEN.into()),
-        ..default()
-    });
+    let ground_plane = Mesh::from(shape::Plane::from_size(10.0));
+    commands.spawn((
+        Collider::from_bevy_mesh(&ground_plane, &ComputedColliderShape::ConvexHull).unwrap(),
+        PbrBundle {
+            mesh: meshes.add(ground_plane),
+            material: materials.add(Color::DARK_GREEN.into()),
+            ..default()
+        },
+    ));
 }
