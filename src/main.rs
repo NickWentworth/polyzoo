@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 mod camera;
+mod objects;
 mod placement;
 mod ui;
 
@@ -14,6 +15,7 @@ fn main() {
         ))
         .add_plugins((
             camera::ControllableCameraPlugin,
+            objects::ObjectsPlugin,
             placement::PlacementPlugin,
             ui::UiPlugin,
         ))

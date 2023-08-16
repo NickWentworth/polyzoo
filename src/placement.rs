@@ -1,6 +1,5 @@
+use crate::{camera::CursorRaycast, objects::ObjectDatabase};
 use bevy::prelude::*;
-
-use crate::camera::CursorRaycast;
 
 pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
@@ -33,7 +32,7 @@ fn setup_placement(mut commands: Commands, assets: Res<AssetServer>) {
 
 fn handle_placement(
     mut commands: Commands,
-    assets: Res<AssetServer>,
+    objects: Res<ObjectDatabase>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 
@@ -56,17 +55,19 @@ fn handle_placement(
 
             // if the place button is pressed, spawn a new post, leaving the old post where it last was
             if mouse_buttons.just_pressed(MouseButton::Left) {
-                let new_entity = commands.spawn((
-                    SceneBundle {
-                        scene: assets.load("barriers/wooden_barrier.glb#Scene0"),
-                        transform: Transform::from_translation(point),
-                        ..default()
-                    },
-                    Post {
-                        prev: Some(entity),
-                        next: None,
-                    },
-                )).id();
+                let new_entity = commands
+                    .spawn((
+                        SceneBundle {
+                            scene: objects.barriers()[0].model.clone(),
+                            transform: Transform::from_translation(point),
+                            ..default()
+                        },
+                        Post {
+                            prev: Some(entity),
+                            next: None,
+                        },
+                    ))
+                    .id();
 
                 // update newly placed post's next field
                 post.next = Some(new_entity);
