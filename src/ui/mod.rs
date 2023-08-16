@@ -5,7 +5,27 @@ mod toolbar;
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, toolbar::setup_toolbar);
+        app.init_resource::<UiTheme>()
+            .add_systems(Startup, toolbar::setup_toolbar);
+    }
+}
+
+#[derive(Resource)]
+struct UiTheme {
+    white: Color,
+    medium: Color,
+    dark: Color,
+    accent: Color,
+}
+
+impl Default for UiTheme {
+    fn default() -> Self {
+        Self {
+            white: Color::hex("#E8EDED").unwrap(),
+            medium: Color::hex("#4F6367").unwrap(),
+            dark: Color::hex("#354345").unwrap(),
+            accent: Color::hex("#F26430").unwrap(),
+        }
     }
 }
 

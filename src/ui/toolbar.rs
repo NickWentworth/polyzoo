@@ -1,16 +1,12 @@
-use super::BlockCameraRaycast;
+use super::{BlockCameraRaycast, UiTheme};
 use bevy::prelude::*;
 
-pub fn setup_toolbar(mut commands: Commands) {
+pub(super) fn setup_toolbar(mut commands: Commands, theme: Res<UiTheme>) {
     use Val::*;
-
-    let white = Color::hex("#E8EDED").unwrap();
-    let medium = Color::hex("#4F6367").unwrap();
-    let dark = Color::hex("#354345").unwrap();
 
     let text_style = TextStyle {
         font_size: 18.0,
-        color: white,
+        color: theme.white,
         ..default()
     };
 
@@ -34,7 +30,7 @@ pub fn setup_toolbar(mut commands: Commands) {
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: medium.into(),
+                background_color: theme.medium.into(),
                 ..default()
             },
             BlockCameraRaycast,
@@ -69,7 +65,7 @@ pub fn setup_toolbar(mut commands: Commands) {
                     parent
                         .spawn(ButtonBundle {
                             style: button_style.clone(),
-                            background_color: dark.into(),
+                            background_color: theme.dark.into(),
                             ..default()
                         })
                         .with_children(|parent| {
@@ -79,7 +75,7 @@ pub fn setup_toolbar(mut commands: Commands) {
                     parent
                         .spawn(ButtonBundle {
                             style: button_style.clone(),
-                            background_color: dark.into(),
+                            background_color: theme.dark.into(),
                             ..default()
                         })
                         .with_children(|parent| {
@@ -89,7 +85,7 @@ pub fn setup_toolbar(mut commands: Commands) {
                     parent
                         .spawn(ButtonBundle {
                             style: button_style.clone(),
-                            background_color: dark.into(),
+                            background_color: theme.dark.into(),
                             ..default()
                         })
                         .with_children(|parent| {
