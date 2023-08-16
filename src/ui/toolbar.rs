@@ -1,3 +1,4 @@
+use super::BlockCameraRaycast;
 use bevy::prelude::*;
 
 pub fn setup_toolbar(mut commands: Commands) {
@@ -21,20 +22,23 @@ pub fn setup_toolbar(mut commands: Commands) {
     };
 
     commands
-        .spawn((NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                bottom: Px(0.0),
-                left: Px(0.0),
-                right: Px(0.0),
-                padding: UiRect::all(Px(8.0)),
-                display: Display::Flex,
-                align_items: AlignItems::Center,
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    bottom: Px(0.0),
+                    left: Px(0.0),
+                    right: Px(0.0),
+                    padding: UiRect::all(Px(8.0)),
+                    display: Display::Flex,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                background_color: medium.into(),
                 ..default()
             },
-            background_color: medium.into(),
-            ..default()
-        },))
+            BlockCameraRaycast,
+        ))
         .with_children(|parent| {
             // currency panel
             parent

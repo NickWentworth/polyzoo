@@ -1,3 +1,4 @@
+use crate::ui::UiQuery;
 use bevy::{
     ecs::system::SystemParam,
     input::mouse::{MouseMotion, MouseWheel},
@@ -115,6 +116,7 @@ pub struct CursorRaycast<'w, 's> {
     main_camera: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<CameraController>>,
     main_window: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     rapier: Res<'w, RapierContext>,
+    ui: UiQuery<'w, 's>,
 }
 
 impl<'w, 's> CursorRaycast<'w, 's> {
@@ -125,8 +127,14 @@ impl<'w, 's> CursorRaycast<'w, 's> {
         let (camera, camera_transform) = self.main_camera.single();
         let window = self.main_window.single();
 
+        // ensure the cursor is not within raycast blocking ui
+        let cursor_position = window.cursor_position()?;
+        if self.ui.within_blocking_ui(cursor_position) {
+            return None;
+        }
+
         // get ray from camera's perspective to cursor point
-        let ray = camera.viewport_to_world(camera_transform, window.cursor_position()?)?;
+        let ray = camera.viewport_to_world(camera_transform, cursor_position)?;
 
         // cast the ray
         let (entity, distance) = self.rapier.cast_ray(
