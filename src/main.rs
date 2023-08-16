@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::*;
 
 mod camera;
 mod placement;
+mod ui;
 
 fn main() {
     App::new()
@@ -11,7 +12,11 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
         ))
-        .add_plugins((camera::ControllableCameraPlugin, placement::PlacementPlugin))
+        .add_plugins((
+            camera::ControllableCameraPlugin,
+            placement::PlacementPlugin,
+            ui::UiPlugin,
+        ))
         .add_systems(Startup, setup_demo_scene)
         .run();
 }
