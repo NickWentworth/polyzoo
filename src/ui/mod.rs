@@ -1,12 +1,14 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
+mod tabs;
 mod toolbar;
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UiTheme>()
-            .add_systems(Startup, toolbar::setup_toolbar);
+            .add_systems(Startup, toolbar::setup_toolbar)
+            .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>);
     }
 }
 
