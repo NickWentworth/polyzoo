@@ -1,32 +1,29 @@
-use self::barrier::{init_barriers, Barrier};
 use bevy::prelude::*;
 
 mod barrier;
 
+pub use self::barrier::Barrier;
+
 pub struct ObjectsPlugin;
 impl Plugin for ObjectsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<ObjectDatabase>();
+        app.add_asset::<Barrier>().init_resource::<ObjectLoader>();
     }
 }
 
-/// Resource containing all pre-loaded object data
+/// Resource containing all pre-loaded object data in untyped handles, so that it isn't unloaded
+///
+/// For now, all objects are also stored in the ui, so data stems from there
 #[derive(Resource)]
-pub struct ObjectDatabase {
-    barriers: Vec<Barrier>,
+struct ObjectLoader {
+    _data: Vec<HandleUntyped>,
 }
 
-impl FromWorld for ObjectDatabase {
+impl FromWorld for ObjectLoader {
     fn from_world(world: &mut World) -> Self {
-        Self {
-            barriers: init_barriers(world.resource::<AssetServer>()),
-        }
-    }
-}
+        let mut data = Vec::new();
+        data.extend(barrier::add(world));
 
-impl ObjectDatabase {
-    /// Get a slice containing all barrier data
-    pub fn barriers(&self) -> &[Barrier] {
-        &self.barriers
+        Self { _data: data }
     }
 }

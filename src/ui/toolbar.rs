@@ -1,5 +1,5 @@
 use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
-use crate::objects::ObjectDatabase;
+use crate::objects::Barrier;
 use bevy::prelude::*;
 
 /// Tab enum for different buy menus accessible from the toolbar
@@ -13,7 +13,7 @@ pub(super) enum BuyMenu {
 pub(super) fn setup_toolbar(
     mut commands: Commands,
     theme: Res<UiTheme>,
-    objects: Res<ObjectDatabase>,
+    barriers: Res<Assets<Barrier>>,
 ) {
     use Val::*;
 
@@ -52,7 +52,7 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Build))
                 .with_children(|parent| {
-                    for barrier in objects.barriers() {
+                    for (_, barrier) in barriers.iter() {
                         parent.spawn(theme.light_button()).with_children(|parent| {
                             parent.spawn(theme.dark_text(barrier.name, 16.0));
                         });

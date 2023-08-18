@@ -1,4 +1,4 @@
-use crate::{camera::CursorRaycast, objects::ObjectDatabase};
+use crate::camera::CursorRaycast;
 use bevy::prelude::*;
 
 pub struct PlacementPlugin;
@@ -32,7 +32,7 @@ fn setup_placement(mut commands: Commands, assets: Res<AssetServer>) {
 
 fn handle_placement(
     mut commands: Commands,
-    objects: Res<ObjectDatabase>,
+    assets: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 
@@ -58,7 +58,7 @@ fn handle_placement(
                 let new_entity = commands
                     .spawn((
                         SceneBundle {
-                            scene: objects.barriers()[0].model.clone(),
+                            scene: assets.load("barriers/wooden_barrier.glb#Scene0"),
                             transform: Transform::from_translation(point),
                             ..default()
                         },
