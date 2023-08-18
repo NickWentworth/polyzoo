@@ -1,4 +1,4 @@
-use super::{tabs::TabButton, BlockCameraRaycast, UiTheme};
+use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::objects::ObjectDatabase;
 use bevy::prelude::*;
 
@@ -30,25 +30,6 @@ pub(super) fn setup_toolbar(
         ..default()
     };
 
-    // default button styling
-    let button = ButtonBundle {
-        style: Style {
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            padding: UiRect::all(Px(4.0)),
-            ..default()
-        },
-        background_color: theme.dark.into(),
-        ..default()
-    };
-
-    // default text styling
-    let text_style = TextStyle {
-        font_size: 18.0,
-        color: theme.white,
-        ..default()
-    };
-
     commands
         .spawn((
             NodeBundle {
@@ -72,9 +53,8 @@ pub(super) fn setup_toolbar(
                 .spawn((popup_menu.clone(), BuyMenu::Build))
                 .with_children(|parent| {
                     for barrier in objects.barriers() {
-                        parent.spawn(button.clone()).with_children(|parent| {
-                            parent
-                                .spawn(TextBundle::from_section(barrier.name, text_style.clone()));
+                        parent.spawn(theme.light_button()).with_children(|parent| {
+                            parent.spawn(theme.dark_text(barrier.name, 16.0));
                         });
                     }
                 });
@@ -83,14 +63,14 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Animal))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section("Animals", text_style.clone()));
+                    parent.spawn(theme.white_text("Animals", 18.0));
                 });
 
             // nature menu
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Nature))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section("Nature", text_style.clone()));
+                    parent.spawn(theme.white_text("Nature", 18.0));
                 });
 
             // toolbar
@@ -116,7 +96,7 @@ pub(super) fn setup_toolbar(
                             ..default()
                         })
                         .with_children(|parent| {
-                            parent.spawn(TextBundle::from_section("$1,000", text_style.clone()));
+                            parent.spawn(theme.white_text("$1,000", 18.0));
                         });
 
                     // buttons panel
@@ -133,36 +113,27 @@ pub(super) fn setup_toolbar(
                         })
                         .with_children(|parent| {
                             parent
-                                .spawn((button.clone(), TabButton(Some(BuyMenu::Build))))
+                                .spawn((theme.dark_button(), TabButton(Some(BuyMenu::Build))))
                                 .with_children(|parent| {
-                                    parent.spawn(TextBundle::from_section(
-                                        "Build",
-                                        text_style.clone(),
-                                    ));
+                                    parent.spawn(theme.white_text("Build", 18.0));
                                 });
 
                             parent
-                                .spawn((button.clone(), TabButton(Some(BuyMenu::Animal))))
+                                .spawn((theme.dark_button(), TabButton(Some(BuyMenu::Animal))))
                                 .with_children(|parent| {
-                                    parent.spawn(TextBundle::from_section(
-                                        "Animals",
-                                        text_style.clone(),
-                                    ));
+                                    parent.spawn(theme.white_text("Animals", 18.0));
                                 });
 
                             parent
-                                .spawn((button.clone(), TabButton(Some(BuyMenu::Nature))))
+                                .spawn((theme.dark_button(), TabButton(Some(BuyMenu::Nature))))
                                 .with_children(|parent| {
-                                    parent.spawn(TextBundle::from_section(
-                                        "Nature",
-                                        text_style.clone(),
-                                    ));
+                                    parent.spawn(theme.white_text("Nature", 18.0));
                                 });
 
                             parent
-                                .spawn((button.clone(), TabButton::<BuyMenu>(None)))
+                                .spawn((theme.dark_button(), TabButton::<BuyMenu>(None)))
                                 .with_children(|parent| {
-                                    parent.spawn(TextBundle::from_section("X", text_style.clone()));
+                                    parent.spawn(theme.white_text("X", 18.0));
                                 });
                         });
 
@@ -178,8 +149,7 @@ pub(super) fn setup_toolbar(
                             ..default()
                         })
                         .with_children(|parent| {
-                            parent
-                                .spawn(TextBundle::from_section("100 guests", text_style.clone()));
+                            parent.spawn(theme.white_text("100 guests", 18.0));
                         });
                 });
         });

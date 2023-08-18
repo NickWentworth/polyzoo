@@ -1,33 +1,19 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 mod tabs;
+mod theme;
 mod toolbar;
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<UiTheme>()
+        app
+            // theme systems
+            .init_resource::<theme::UiTheme>()
+            .add_systems(Update, theme::handle_interactions)
+            // toolbar systems
             .add_systems(Startup, toolbar::setup_toolbar)
             .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>);
-    }
-}
-
-#[derive(Resource)]
-struct UiTheme {
-    white: Color,
-    medium: Color,
-    dark: Color,
-    accent: Color,
-}
-
-impl Default for UiTheme {
-    fn default() -> Self {
-        Self {
-            white: Color::hex("#E8EDED").unwrap(),
-            medium: Color::hex("#4F6367").unwrap(),
-            dark: Color::hex("#354345").unwrap(),
-            accent: Color::hex("#F26430").unwrap(),
-        }
     }
 }
 
