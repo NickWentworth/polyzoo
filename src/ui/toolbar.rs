@@ -2,6 +2,8 @@ use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::objects::Barrier;
 use bevy::prelude::*;
 
+// TODO - add information panel to buy menu
+
 /// Tab enum for different buy menus accessible from the toolbar
 #[derive(Component, PartialEq)]
 pub(super) enum BuyMenu {
@@ -52,10 +54,36 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Build))
                 .with_children(|parent| {
+                    // map all barriers into purchase buttons
                     for (_, barrier) in barriers.iter() {
-                        parent.spawn(theme.light_button()).with_children(|parent| {
-                            parent.spawn(theme.dark_text(barrier.name, 16.0));
-                        });
+                        parent
+                            .spawn(theme.light_button())
+                            .insert(Style {
+                                padding: UiRect::all(Px(4.0)),
+                                row_gap: Px(4.0),
+                                display: Display::Flex,
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            })
+                            .with_children(|parent| {
+                                // barrier image
+                                parent.spawn(ImageBundle {
+                                    image: barrier.image.clone().into(),
+                                    style: Style {
+                                        width: Px(80.0),
+                                        height: Px(80.0),
+                                        ..default()
+                                    },
+                                    ..default()
+                                });
+
+                                // barrier cost
+                                parent.spawn(theme.dark_text(&barrier.formatted_cost(), 16.0));
+
+                                // TEMP - name and other info can be displayed in a side panel, image and cost is enough for the button
+                                parent.spawn(theme.dark_text(barrier.name, 16.0));
+                            });
                     }
                 });
 

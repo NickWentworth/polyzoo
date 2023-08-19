@@ -9,6 +9,7 @@ pub struct Barrier {
     pub name: &'static str,
     pub cost: f32,
     pub model: Handle<Scene>,
+    pub image: Handle<Image>,
 }
 
 /// Add all barriers into the assets collection
@@ -20,12 +21,20 @@ pub fn add(world: &mut World) -> Vec<HandleUntyped> {
             name: "Wooden Barrier",
             cost: 10.0,
             model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
+            image: asset_server.load("test.png"),
         },
         // TEMP
         Barrier {
             name: "Test Barrier",
             cost: 20.0,
             model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
+            image: asset_server.load("test.png"),
+        },
+        Barrier {
+            name: "Test Barrier2",
+            cost: 20.0,
+            model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
+            image: asset_server.load("test.png"),
         },
     ];
 
@@ -35,4 +44,14 @@ pub fn add(world: &mut World) -> Vec<HandleUntyped> {
         .into_iter()
         .map(|barrier| barrier_assets.add(barrier).clone_untyped())
         .collect()
+}
+
+impl Barrier {
+    // TODO - add commas between thousands, millions, etc.
+    /// Return a formatted cost for the barrier
+    ///
+    /// Ex: 1000 => $1,000
+    pub fn formatted_cost(&self) -> String {
+        format!("${:.0}", self.cost)
+    }
 }
