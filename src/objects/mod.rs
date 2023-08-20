@@ -1,13 +1,19 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    reflect::{TypePath, TypeUuid},
+};
 
 mod barrier;
+mod nature;
 
 pub use self::barrier::Barrier;
 
 pub struct ObjectsPlugin;
 impl Plugin for ObjectsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset::<Barrier>().init_resource::<ObjectLoader>();
+        app.add_asset::<Object>()
+            .add_asset::<Barrier>()
+            .init_resource::<ObjectLoader>();
     }
 }
 
@@ -22,8 +28,37 @@ struct ObjectLoader {
 impl FromWorld for ObjectLoader {
     fn from_world(world: &mut World) -> Self {
         let mut data = Vec::new();
+
         data.extend(barrier::add(world));
+        data.extend(nature::add(world));
 
         Self { _data: data }
+    }
+}
+
+// TODO - barriers should also be objects, find a way to define a barrier as an object with an extra field
+/// Base asset for a placeable object
+#[derive(TypeUuid, TypePath)]
+#[uuid = "5981b7ce-340e-4e24-a004-7139c8860455"]
+pub struct Object {
+    pub name: &'static str,
+    pub cost: f32,
+    pub model: Handle<Scene>,
+    pub image: Handle<Image>,
+    pub group: ObjectGroup,
+}
+
+/// Different classifications for placeable objects
+pub enum ObjectGroup {
+    Rock,
+}
+
+impl Object {
+    // TODO - add commas between thousands, millions, etc.
+    /// Return a formatted cost for the barrier
+    ///
+    /// Ex: 1000 => $1,000
+    pub fn formatted_cost(&self) -> String {
+        format!("${:.0}", self.cost)
     }
 }
