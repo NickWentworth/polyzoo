@@ -1,6 +1,6 @@
 use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::{
-    objects::{Barrier, Object},
+    objects::{Object, ObjectGroup},
     placement::Placement,
 };
 use bevy::prelude::*;
@@ -22,7 +22,6 @@ pub(super) enum BuyMenu {
 pub(super) fn setup_toolbar(
     mut commands: Commands,
     theme: Res<UiTheme>,
-    barriers: Res<Assets<Barrier>>,
     objects: Res<Assets<Object>>,
 ) {
     use Val::*;
@@ -63,35 +62,11 @@ pub(super) fn setup_toolbar(
                 .spawn((popup_menu.clone(), BuyMenu::Build))
                 .with_children(|parent| {
                     // map all barriers into purchase buttons
-                    for (_, barrier) in barriers.iter() {
-                        parent
-                            .spawn(theme.light_button())
-                            .insert(Style {
-                                padding: UiRect::all(Px(4.0)),
-                                row_gap: Px(4.0),
-                                display: Display::Flex,
-                                flex_direction: FlexDirection::Column,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            })
-                            .with_children(|parent| {
-                                // barrier image
-                                parent.spawn(ImageBundle {
-                                    image: barrier.image.clone().into(),
-                                    style: Style {
-                                        width: Px(80.0),
-                                        height: Px(80.0),
-                                        ..default()
-                                    },
-                                    ..default()
-                                });
-
-                                // barrier cost
-                                parent.spawn(theme.dark_text(&barrier.formatted_cost(), 16.0));
-
-                                // TEMP - name and other info can be displayed in a side panel, image and cost is enough for the button
-                                parent.spawn(theme.dark_text(barrier.name, 16.0));
-                            });
+                    for (handle_id, object) in objects
+                        .iter()
+                        .filter(|(_, obj)| matches!(obj.group, ObjectGroup::Barrier(_)))
+                    {
+                        buy_button(object, objects.get_handle(handle_id), parent, &theme);
                     }
                 });
 
@@ -106,7 +81,10 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Nature))
                 .with_children(|parent| {
-                    for (handle_id, object) in objects.iter() {
+                    for (handle_id, object) in objects
+                        .iter()
+                        .filter(|(_, obj)| obj.group == ObjectGroup::Rock)
+                    {
                         buy_button(object, objects.get_handle(handle_id), parent, &theme);
                     }
                 });

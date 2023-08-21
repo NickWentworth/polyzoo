@@ -1,4 +1,7 @@
-use crate::{camera::CursorRaycast, objects::Object};
+use crate::{
+    camera::CursorRaycast,
+    objects::{Object, ObjectGroup},
+};
 use bevy::prelude::*;
 
 pub struct PlacementPlugin;
@@ -81,19 +84,27 @@ fn handle_placement(
             if *visibility != Visibility::Hidden {
                 let object = objects.get(object_handle).unwrap();
 
-                println!("Spawning: {}", object.name);
-
+                // spawn in the object at the same location as the preview
                 commands.spawn(SceneBundle {
                     scene: object.model.clone(),
                     transform: transform.clone(),
                     ..default()
                 });
+
+                // special cases for spaning of various object groups
+                match &object.group {
+                    // barriers must spawn in fences between posts
+                    ObjectGroup::Barrier(fence_model) => {
+                        // TODO - actually spawn fence between posts
+
+                        // let midpoint = from.lerp(to, 0.5);
+                        // let length = from.distance(to);
+                        // let angle = -f32::atan2(to.z - from.z, to.x - from.x);
+                    }
+
+                    _ => (),
+                }
             }
         }
     }
 }
-
-// saved code for generating a connection between two barrier posts
-// let midpoint = from.lerp(to, 0.5);
-// let length = from.distance(to);
-// let angle = -f32::atan2(to.z - from.z, to.x - from.x);

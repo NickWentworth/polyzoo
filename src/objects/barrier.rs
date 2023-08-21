@@ -1,57 +1,22 @@
-use bevy::{
-    prelude::*,
-    reflect::{TypePath, TypeUuid},
-};
-
-#[derive(TypeUuid, TypePath)]
-#[uuid = "b0aa393f-5641-480d-a0bf-54e862a50c20"]
-pub struct Barrier {
-    pub name: &'static str,
-    pub cost: f32,
-    pub model: Handle<Scene>,
-    pub image: Handle<Image>,
-}
+use super::{Object, ObjectGroup};
+use bevy::prelude::*;
 
 /// Add all barriers into the assets collection
 pub fn add(world: &mut World) -> Vec<HandleUntyped> {
-    // load all required data for barriers
+    // load all required data
     let asset_server = world.resource::<AssetServer>();
-    let barriers = vec![
-        Barrier {
-            name: "Wooden Barrier",
-            cost: 10.0,
-            model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
-            image: asset_server.load("test.png"),
-        },
-        // TEMP
-        Barrier {
-            name: "Test Barrier",
-            cost: 20.0,
-            model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
-            image: asset_server.load("test.png"),
-        },
-        Barrier {
-            name: "Test Barrier2",
-            cost: 20.0,
-            model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
-            image: asset_server.load("test.png"),
-        },
-    ];
+    let objects = vec![Object {
+        name: "Wooden Barrier",
+        cost: 10.0,
+        model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
+        image: asset_server.load("test.png"),
+        group: ObjectGroup::Barrier(asset_server.load("barriers/wooden_fence.glb#Scene0")),
+    }];
 
-    // add each barrier into assets collection and map to its handle
-    let mut barrier_assets = world.resource_mut::<Assets<Barrier>>();
-    barriers
+    // add each object into assets collection and map to its handle
+    let mut object_assets = world.resource_mut::<Assets<Object>>();
+    objects
         .into_iter()
-        .map(|barrier| barrier_assets.add(barrier).clone_untyped())
+        .map(|obj| object_assets.add(obj).clone_untyped())
         .collect()
-}
-
-impl Barrier {
-    // TODO - add commas between thousands, millions, etc.
-    /// Return a formatted cost for the barrier
-    ///
-    /// Ex: 1000 => $1,000
-    pub fn formatted_cost(&self) -> String {
-        format!("${:.0}", self.cost)
-    }
 }

@@ -6,14 +6,10 @@ use bevy::{
 mod barrier;
 mod nature;
 
-pub use self::barrier::Barrier;
-
 pub struct ObjectsPlugin;
 impl Plugin for ObjectsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset::<Object>()
-            .add_asset::<Barrier>()
-            .init_resource::<ObjectLoader>();
+        app.add_asset::<Object>().init_resource::<ObjectLoader>();
     }
 }
 
@@ -49,7 +45,9 @@ pub struct Object {
 }
 
 /// Different classifications for placeable objects
+#[derive(PartialEq)]
 pub enum ObjectGroup {
+    Barrier(Handle<Scene>), // stores the tileable fence model connecting posts
     Rock,
 }
 
