@@ -6,11 +6,11 @@ pub fn add(world: &mut World) -> Vec<HandleUntyped> {
     // load all required data
     let asset_server = world.resource::<AssetServer>();
     let objects = vec![Object {
-        name: "Wooden Barrier",
-        cost: 10.0,
-        model: asset_server.load("barriers/wooden_barrier.glb#Scene0"),
+        name: "Concrete Barrier",
+        cost: 20.0,
+        model: asset_server.load("barriers/concrete_post.glb#Scene0"),
         image: asset_server.load("test.png"),
-        group: ObjectGroup::Barrier(asset_server.load("barriers/wooden_fence.glb#Scene0")),
+        group: ObjectGroup::Barrier(asset_server.load("barriers/concrete_fence.glb#Scene0")),
     }];
 
     // add each object into assets collection and map to its handle
