@@ -1,8 +1,15 @@
 use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
-use crate::objects::{Barrier, Object};
+use crate::{
+    objects::{Barrier, Object},
+    placement::Placement,
+};
 use bevy::prelude::*;
 
 // TODO - add information panel to buy menu
+
+/// Component for a buy button to store the contained object
+#[derive(Component)]
+pub struct BuyButton(Handle<Object>);
 
 /// Tab enum for different buy menus accessible from the toolbar
 #[derive(Component, PartialEq)]
@@ -99,8 +106,8 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Nature))
                 .with_children(|parent| {
-                    for (_, object) in objects.iter() {
-                        buy_button(object, parent, &theme);
+                    for (handle_id, object) in objects.iter() {
+                        buy_button(object, objects.get_handle(handle_id), parent, &theme);
                     }
                 });
 
@@ -187,19 +194,27 @@ pub(super) fn setup_toolbar(
 }
 
 /// Spawns in a buy button built for a given object
-fn buy_button(object: &Object, parent: &mut ChildBuilder, theme: &UiTheme) -> Entity {
+fn buy_button(
+    object: &Object,
+    handle: Handle<Object>,
+    parent: &mut ChildBuilder,
+    theme: &UiTheme,
+) -> Entity {
     use Val::*;
 
     parent
         .spawn(theme.light_button())
-        .insert(Style {
-            padding: UiRect::all(Px(4.0)),
-            row_gap: Px(4.0),
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            ..default()
-        })
+        .insert((
+            Style {
+                padding: UiRect::all(Px(4.0)),
+                row_gap: Px(4.0),
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BuyButton(handle),
+        ))
         .with_children(|parent| {
             // barrier image
             parent.spawn(ImageBundle {
@@ -219,4 +234,15 @@ fn buy_button(object: &Object, parent: &mut ChildBuilder, theme: &UiTheme) -> En
             parent.spawn(theme.dark_text(object.name, 16.0));
         })
         .id()
+}
+
+pub fn toolbar_interactions(
+    buy_buttons: Query<(&Interaction, &BuyButton), Changed<Interaction>>,
+    mut placement: ResMut<Placement>,
+) {
+    for (interaction, BuyButton(object_handle)) in buy_buttons.iter() {
+        if *interaction == Interaction::Pressed {
+            placement.object = Some(object_handle.clone());
+        }
+    }
 }

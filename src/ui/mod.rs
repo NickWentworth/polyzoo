@@ -13,6 +13,7 @@ impl Plugin for UiPlugin {
             .add_systems(Update, theme::handle_interactions)
             // toolbar systems
             .add_systems(Startup, toolbar::setup_toolbar)
+            .add_systems(Update, toolbar::toolbar_interactions)
             .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>);
     }
 }

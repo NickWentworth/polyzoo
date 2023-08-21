@@ -1,102 +1,99 @@
-use crate::camera::CursorRaycast;
+use crate::{camera::CursorRaycast, objects::Object};
 use bevy::prelude::*;
 
 pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_placement)
+        app.init_resource::<Placement>()
+            .add_systems(Update, handle_preview)
             .add_systems(Update, handle_placement);
     }
 }
 
-/// Stores required information to build the border of a habitat
+/// Marker trait for the preview of the currently selected object
 #[derive(Component)]
-struct Post {
-    prev: Option<Entity>,
-    next: Option<Entity>,
+struct Preview;
+
+#[derive(Resource)]
+pub struct Placement {
+    /// Handle to the object currently being placed, if it exists
+    pub object: Option<Handle<Object>>,
 }
 
-fn setup_placement(mut commands: Commands, assets: Res<AssetServer>) {
-    // spawn the first preview post
-    commands.spawn((
-        SceneBundle {
-            scene: assets.load("barriers/wooden_barrier.glb#Scene0"),
-            ..default()
-        },
-        Post {
-            prev: None,
-            next: None,
-        },
-    ));
+impl FromWorld for Placement {
+    /// Setup the placement resource and insert a preview bundle
+    fn from_world(world: &mut World) -> Self {
+        world.spawn((
+            SceneBundle {
+                visibility: Visibility::Hidden,
+                ..default()
+            },
+            Preview,
+        ));
+
+        Self { object: None }
+    }
+}
+
+fn handle_preview(
+    placement: Res<Placement>,
+    objects: Res<Assets<Object>>,
+    cursor_raycast: CursorRaycast,
+
+    mut preview: Query<(&mut Transform, &mut Visibility, &mut Handle<Scene>), With<Preview>>,
+) {
+    let (mut transform, mut visibility, mut scene_handle) = preview.single_mut();
+
+    match &placement.object {
+        Some(handle) => {
+            // update object's position and model if needed
+            if let (Some(point), Some(object)) = (cursor_raycast.point(), objects.get(&handle)) {
+                // show preview of the correct object at mouse position
+                transform.translation = point;
+                *visibility = Visibility::Visible;
+                *scene_handle = object.model.clone();
+            } else {
+                // else, just hide the model
+                *visibility = Visibility::Hidden;
+            }
+        }
+
+        // no need to update anything else, just ensure preview is hidden
+        None => *visibility = Visibility::Hidden,
+    }
 }
 
 fn handle_placement(
     mut commands: Commands,
-    assets: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 
-    mut posts: Query<(&mut Post, &mut Transform, &mut Visibility, Entity)>,
-
-    cursor_raycast: CursorRaycast,
+    placement: Res<Placement>,
+    objects: Res<Assets<Object>>,
     mouse_buttons: Res<Input<MouseButton>>,
+
+    preview: Query<(&Transform, &Visibility), With<Preview>>,
 ) {
-    let (mut post, mut transform, mut visibility, entity) = posts
-        .iter_mut()
-        .find(|(post, ..)| post.next.is_none())
-        .unwrap();
+    if mouse_buttons.just_pressed(MouseButton::Left) {
+        if let Some(object_handle) = &placement.object {
+            // copy over some components from preview object
+            let (transform, visibility) = preview.single();
 
-    match cursor_raycast.point() {
-        // if the mouse is hovering over terrain, show the preview post
-        Some(point) => {
-            // set it to visible and update translation
-            *visibility = Visibility::Visible;
-            transform.translation = point;
+            // TODO - more properly verify valid object placement
+            if *visibility != Visibility::Hidden {
+                let object = objects.get(object_handle).unwrap();
 
-            // if the place button is pressed, spawn a new post, leaving the old post where it last was
-            if mouse_buttons.just_pressed(MouseButton::Left) {
-                let new_entity = commands
-                    .spawn((
-                        SceneBundle {
-                            scene: assets.load("barriers/wooden_barrier.glb#Scene0"),
-                            transform: Transform::from_translation(point),
-                            ..default()
-                        },
-                        Post {
-                            prev: Some(entity),
-                            next: None,
-                        },
-                    ))
-                    .id();
+                println!("Spawning: {}", object.name);
 
-                // update newly placed post's next field
-                post.next = Some(new_entity);
-
-                // create connection between previous post position and placed post position
-                if let Some(previous_entity) = post.prev {
-                    let (_, from_transform, ..) = posts.get(previous_entity).unwrap();
-                    let from = from_transform.translation;
-                    let to = point;
-
-                    let midpoint = from.lerp(to, 0.5);
-                    let length = from.distance(to);
-                    let angle = -f32::atan2(to.z - from.z, to.x - from.x);
-
-                    commands.spawn(PbrBundle {
-                        mesh: meshes.add(shape::Cube::new(1.0).into()),
-                        material: materials.add(Color::BLUE.into()),
-                        transform: Transform {
-                            translation: midpoint,
-                            rotation: Quat::from_rotation_y(angle),
-                            scale: Vec3::new(length, 3.0, 0.1),
-                        },
-                        ..default()
-                    });
-                }
+                commands.spawn(SceneBundle {
+                    scene: object.model.clone(),
+                    transform: transform.clone(),
+                    ..default()
+                });
             }
         }
-
-        // if the mouse is not over terrain, hide the preview post
-        None => *visibility = Visibility::Hidden,
     }
 }
+
+// saved code for generating a connection between two barrier posts
+// let midpoint = from.lerp(to, 0.5);
+// let length = from.distance(to);
+// let angle = -f32::atan2(to.z - from.z, to.x - from.x);
