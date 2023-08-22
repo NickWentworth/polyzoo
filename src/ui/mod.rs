@@ -14,6 +14,7 @@ impl Plugin for UiPlugin {
             // toolbar systems
             .add_systems(Startup, toolbar::setup_toolbar)
             .add_systems(Update, toolbar::toolbar_interactions)
+            .add_systems(Update, toolbar::toolbar_callbacks)
             .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>);
     }
 }

@@ -5,6 +5,7 @@ mod camera;
 mod objects;
 mod placement;
 mod ui;
+mod zoo;
 
 fn main() {
     App::new()
@@ -18,6 +19,7 @@ fn main() {
             objects::ObjectsPlugin,
             placement::PlacementPlugin,
             ui::UiPlugin,
+            zoo::ZooPlugin,
         ))
         .add_systems(Startup, setup_demo_scene)
         .run();

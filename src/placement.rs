@@ -1,6 +1,7 @@
 use crate::{
     camera::CursorRaycast,
     objects::{Object, ObjectGroup},
+    zoo::ZooBalanceChange,
 };
 use bevy::prelude::*;
 
@@ -108,6 +109,8 @@ fn handle_placement(
     objects: Res<Assets<Object>>,
     mouse_buttons: Res<Input<MouseButton>>,
 
+    mut balance_change: EventWriter<ZooBalanceChange>,
+
     // single entity with preview component
     preview: Query<(&Transform, &Visibility), With<Preview>>,
     // all barrier post components
@@ -121,6 +124,11 @@ fn handle_placement(
             // TODO - more properly verify valid object placement
             if *preview_visibility != Visibility::Hidden {
                 let object = objects.get(object_handle).unwrap();
+
+                // reduce zoo balance by object's cost
+                balance_change.send(ZooBalanceChange {
+                    amount: -object.cost,
+                });
 
                 // spawn in the object at the same location as the preview
                 let mut entity = commands.spawn(SceneBundle {

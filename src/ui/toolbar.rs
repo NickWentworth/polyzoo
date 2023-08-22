@@ -2,10 +2,14 @@ use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::{
     objects::{Object, ObjectGroup},
     placement::ChangePreview,
+    zoo::{OnZooBalanceChanged, Zoo},
 };
 use bevy::prelude::*;
 
 // TODO - add information panel to buy menu
+
+#[derive(Component)]
+pub struct ZooBalanceText;
 
 /// Component for a buy button to store the contained object
 #[derive(Component)]
@@ -21,6 +25,8 @@ pub(super) enum BuyMenu {
 
 pub(super) fn setup_toolbar(
     mut commands: Commands,
+
+    zoo: Res<Zoo>,
     theme: Res<UiTheme>,
     objects: Res<Assets<Object>>,
 ) {
@@ -112,7 +118,10 @@ pub(super) fn setup_toolbar(
                             ..default()
                         })
                         .with_children(|parent| {
-                            parent.spawn(theme.white_text("$1,000", 18.0));
+                            parent.spawn((
+                                theme.white_text(&zoo.formatted_balance(), 18.0),
+                                ZooBalanceText,
+                            ));
                         });
 
                     // buttons panel
@@ -223,5 +232,15 @@ pub fn toolbar_interactions(
             let event = ChangePreview(Some(object_handle.clone()));
             change_preview_writer.send(event);
         }
+    }
+}
+
+pub fn toolbar_callbacks(
+    mut on_balance_changed: EventReader<OnZooBalanceChanged>,
+    mut zoo_balance_text: Query<&mut Text, With<ZooBalanceText>>,
+) {
+    for balance_changed in on_balance_changed.iter() {
+        let mut text = zoo_balance_text.single_mut();
+        text.sections[0].value = format!("${:.0}", balance_changed.balance);
     }
 }
