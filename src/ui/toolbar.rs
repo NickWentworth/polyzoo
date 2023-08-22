@@ -1,7 +1,7 @@
 use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::{
     objects::{Object, ObjectGroup},
-    placement::Placement,
+    placement::ChangePreview,
 };
 use bevy::prelude::*;
 
@@ -216,11 +216,12 @@ fn buy_button(
 
 pub fn toolbar_interactions(
     buy_buttons: Query<(&Interaction, &BuyButton), Changed<Interaction>>,
-    mut placement: ResMut<Placement>,
+    mut change_preview_writer: EventWriter<ChangePreview>,
 ) {
     for (interaction, BuyButton(object_handle)) in buy_buttons.iter() {
         if *interaction == Interaction::Pressed {
-            placement.object = Some(object_handle.clone());
+            let event = ChangePreview(Some(object_handle.clone()));
+            change_preview_writer.send(event);
         }
     }
 }

@@ -8,8 +8,15 @@ pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Placement>()
-            .add_systems(Update, handle_preview)
-            .add_systems(Update, handle_placement);
+            .add_event::<ChangePreview>()
+            .add_systems(
+                Update,
+                (
+                    handle_preview_change,
+                    handle_preview_movement,
+                    handle_placement,
+                ),
+            );
     }
 }
 
@@ -26,7 +33,7 @@ struct Post {
 #[derive(Resource)]
 pub struct Placement {
     /// Handle to the object currently being placed, if it exists
-    pub object: Option<Handle<Object>>,
+    object: Option<Handle<Object>>,
 }
 
 impl FromWorld for Placement {
@@ -44,37 +51,56 @@ impl FromWorld for Placement {
     }
 }
 
-// TODO - this can likely be split between handle_preview_movement and handle_preview_model, as model doesn't need to change each frame
-// TODO - show fence on preview
-fn handle_preview(
-    placement: Res<Placement>,
+/// Event for changing the preview object
+///
+/// Stores `Some(handle)` for the new object, or `None` if deselecting the current object
+#[derive(Event)]
+pub struct ChangePreview(pub Option<Handle<Object>>);
+
+// TODO - handle based on object group, ex: for barriers, spawn in a fence preview as well
+/// Handles the preview's model being changed by `ChangePreview` events
+fn handle_preview_change(
+    mut change_preview_reader: EventReader<ChangePreview>,
+    mut preview: Query<&mut Handle<Scene>, With<Preview>>,
+
+    mut placement: ResMut<Placement>,
     objects: Res<Assets<Object>>,
-    cursor_raycast: CursorRaycast,
-
-    // single entity with preview component
-    mut preview: Query<(&mut Transform, &mut Visibility, &mut Handle<Scene>), With<Preview>>,
 ) {
-    let (mut transform, mut visibility, mut scene_handle) = preview.single_mut();
+    for change_event in change_preview_reader.iter() {
+        // set the placement resource's object field
+        placement.object = change_event.0.clone();
 
-    match &placement.object {
-        Some(handle) => {
-            // update object's position and model if needed
-            if let (Some(point), Some(object)) = (cursor_raycast.point(), objects.get(&handle)) {
-                // show preview of the correct object at mouse position
-                transform.translation = point;
-                *visibility = Visibility::Visible;
-                *scene_handle = object.model.clone();
-            } else {
-                // else, just hide the model
-                *visibility = Visibility::Hidden;
+        // and update the scene handle for preview entity
+        let mut scene_handle = preview.single_mut();
+        *scene_handle = match &change_event.0 {
+            Some(handle) => {
+                let object = objects.get(handle).unwrap();
+                object.model.clone()
             }
+
+            None => Handle::default(),
+        }
+    }
+}
+
+/// Handles movement of the preview using `CursorRaycast` system param
+fn handle_preview_movement(
+    cursor_raycast: CursorRaycast,
+    mut preview: Query<(&mut Transform, &mut Visibility), With<Preview>>,
+) {
+    let (mut transform, mut visibility) = preview.single_mut();
+
+    match cursor_raycast.point() {
+        Some(point) => {
+            transform.translation = point;
+            *visibility = Visibility::Visible;
         }
 
-        // no need to update anything else, just ensure preview is hidden
         None => *visibility = Visibility::Hidden,
     }
 }
 
+/// Handles the placement of objects
 fn handle_placement(
     mut commands: Commands,
 
