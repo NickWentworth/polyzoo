@@ -15,6 +15,7 @@ impl Plugin for PlacementPlugin {
                 (
                     handle_preview_change,
                     handle_preview_movement,
+                    handle_fence_preview_movement,
                     handle_placement,
                 ),
             );
@@ -24,6 +25,10 @@ impl Plugin for PlacementPlugin {
 /// Marker trait for the preview of the currently selected object
 #[derive(Component)]
 struct Preview;
+
+/// Marker trait for the preview of the currently selected barrier's fence
+#[derive(Component)]
+struct FencePreview;
 
 #[derive(Component)]
 struct Post {
@@ -61,25 +66,51 @@ pub struct ChangePreview(pub Option<Handle<Object>>);
 // TODO - handle based on object group, ex: for barriers, spawn in a fence preview as well
 /// Handles the preview's model being changed by `ChangePreview` events
 fn handle_preview_change(
+    mut commands: Commands,
     mut change_preview_reader: EventReader<ChangePreview>,
-    mut preview: Query<&mut Handle<Scene>, With<Preview>>,
 
     mut placement: ResMut<Placement>,
     objects: Res<Assets<Object>>,
+
+    mut preview: Query<&mut Handle<Scene>, With<Preview>>,
+    other_previews: Query<Entity, With<FencePreview>>,
 ) {
+    let mut preview_scene = preview.single_mut();
+
     for change_event in change_preview_reader.iter() {
         // set the placement resource's object field
         placement.object = change_event.0.clone();
 
-        // and update the scene handle for preview entity
-        let mut scene_handle = preview.single_mut();
-        *scene_handle = match &change_event.0 {
-            Some(handle) => {
-                let object = objects.get(handle).unwrap();
-                object.model.clone()
+        // despawn all extra preview entities
+        for other_entity in other_previews.iter() {
+            commands.entity(other_entity).despawn();
+        }
+
+        match &change_event.0 {
+            Some(object_handle) => {
+                // set preview's scene handle to object's model
+                let object = objects.get(object_handle).unwrap();
+                *preview_scene = object.model.clone();
+
+                // handle special cases for object groups
+                match &object.group {
+                    ObjectGroup::Barrier(fence_model) => {
+                        // spawn in a new fence preview entity
+                        commands.spawn((
+                            SceneBundle {
+                                scene: fence_model.clone(),
+                                visibility: Visibility::Hidden,
+                                ..default()
+                            },
+                            FencePreview,
+                        ));
+                    }
+
+                    _ => (),
+                }
             }
 
-            None => Handle::default(),
+            None => *preview_scene = Handle::default(),
         }
     }
 }
@@ -98,6 +129,43 @@ fn handle_preview_movement(
         }
 
         None => *visibility = Visibility::Hidden,
+    }
+}
+
+/// Handles movement of fence preview (if it exists) using `CursorRaycast` system param
+fn handle_fence_preview_movement(
+    cursor_raycast: CursorRaycast,
+
+    posts: Query<(&Post, &Transform), (With<Post>, Without<FencePreview>)>,
+    mut fence_preview: Query<
+        (&mut Transform, &mut Visibility),
+        (With<FencePreview>, Without<Post>),
+    >,
+) {
+    if let Some((mut fence_transform, mut fence_visibility)) = fence_preview.get_single_mut().ok() {
+        match cursor_raycast.point() {
+            Some(point) => {
+                // if there is a previous post, correctly orient the fence preview
+                if let Some((_, post_transform)) =
+                    posts.iter().find(|(post, _)| post.next.is_none())
+                {
+                    let from = post_transform.translation;
+                    let to = point;
+
+                    let length = from.distance(to);
+                    let angle = -f32::atan2(to.z - from.z, to.x - from.x);
+
+                    *fence_transform = Transform {
+                        translation: from,
+                        rotation: Quat::from_rotation_y(angle),
+                        scale: Vec3::new(length, 1.0, 1.0),
+                    };
+                    *fence_visibility = Visibility::Visible;
+                }
+            }
+
+            None => *fence_visibility = Visibility::Hidden,
+        }
     }
 }
 
