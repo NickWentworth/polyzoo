@@ -38,25 +38,18 @@ impl FromWorld for ObjectLoader {
 #[uuid = "5981b7ce-340e-4e24-a004-7139c8860455"]
 pub struct Object {
     pub name: &'static str,
-    pub cost: f32,
+    pub cost: Currency,
     pub model: Handle<Scene>,
     pub image: Handle<Image>,
     pub group: ObjectGroup,
 }
+
+/// Type alias for money variables
+pub type Currency = f32;
 
 /// Different classifications for placeable objects
 #[derive(PartialEq)]
 pub enum ObjectGroup {
     Barrier(Handle<Scene>), // stores the tileable fence model connecting posts
     Rock,
-}
-
-impl Object {
-    // TODO - add commas between thousands, millions, etc.
-    /// Return a formatted cost for the barrier
-    ///
-    /// Ex: 1000 => $1,000
-    pub fn formatted_cost(&self) -> String {
-        format!("${:.0}", self.cost)
-    }
 }

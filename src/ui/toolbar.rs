@@ -1,4 +1,4 @@
-use super::{tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
+use super::{formatted_currency, tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::{
     objects::{Object, ObjectGroup},
     placement::ChangePlacementObject,
@@ -119,7 +119,7 @@ pub(super) fn setup_toolbar(
                         })
                         .with_children(|parent| {
                             parent.spawn((
-                                theme.white_text(&zoo.formatted_balance(), 18.0),
+                                theme.white_text(&formatted_currency(zoo.balance()), 18.0),
                                 ZooBalanceText,
                             ));
                         });
@@ -215,7 +215,7 @@ fn buy_button(
             });
 
             // barrier cost
-            parent.spawn(theme.dark_text(&object.formatted_cost(), 16.0));
+            parent.spawn(theme.dark_text(&formatted_currency(object.cost), 16.0));
 
             // TEMP - name and other info can be displayed in a side panel, image and cost is enough for the button
             parent.spawn(theme.dark_text(object.name, 16.0));
@@ -243,6 +243,6 @@ pub fn toolbar_callbacks(
 ) {
     for balance_changed in on_balance_changed.iter() {
         let mut text = zoo_balance_text.single_mut();
-        text.sections[0].value = format!("${:.0}", balance_changed.balance);
+        text.sections[0].value = formatted_currency(balance_changed.balance);
     }
 }

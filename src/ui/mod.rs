@@ -1,3 +1,4 @@
+use crate::objects::Currency;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 mod tabs;
@@ -48,4 +49,10 @@ impl<'w, 's> UiQuery<'w, 's> {
 
         false
     }
+}
+
+// TODO - add commas between thousands, millions, etc.
+/// Nicely formats the currency for display
+fn formatted_currency(amount: Currency) -> String {
+    format!("${:.0}", amount)
 }
