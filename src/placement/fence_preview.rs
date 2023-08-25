@@ -1,7 +1,7 @@
 use super::{ChangePlacementObject, PlaceObject};
 use crate::{
     camera::CursorRaycast,
-    objects::{Object, ObjectGroup},
+    objects::{Object, ObjectGroup, ObjectUtility},
 };
 use bevy::prelude::*;
 
@@ -21,11 +21,13 @@ pub fn handle_movement(
     if let Some((mut transform, mut visibility, fence)) = preview.get_single_mut().ok() {
         match cursor_raycast.point() {
             Some(point) => {
-                // calculate angle and scale for the fence preview
-                let length = fence.from.distance(point);
+                // calculate midpoint, angle, and length for the fence preview
+                let midpoint = fence.from.lerp(point, 0.5);
                 let angle = -f32::atan2(point.z - fence.from.z, point.x - fence.from.x);
+                let length = fence.from.distance(point);
+
                 *transform = Transform {
-                    translation: fence.from,
+                    translation: midpoint,
                     rotation: Quat::from_rotation_y(angle),
                     scale: Vec3::new(length, 1.0, 1.0),
                 };
@@ -48,14 +50,16 @@ pub fn change_placement_object(
     // despawn preview on placement object change
     for _ in object_changes.iter() {
         if let Some(entity) = preview.get_single().ok() {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
 
 pub fn place_object(
+    mut object_utility: ObjectUtility,
     mut commands: Commands,
     objects: Res<Assets<Object>>,
+
     mut object_placements: EventReader<PlaceObject>,
     mut preview: Query<(&mut FencePreview, &Transform, Entity)>,
 ) {
@@ -65,28 +69,23 @@ pub fn place_object(
         match &object.group {
             ObjectGroup::Barrier(fence_model) => match preview.get_single_mut().ok() {
                 // if preview fence exists, spawn in a permanent fence at the preview's location
-                Some((mut fence, transform, _)) => {
+                Some((mut fence_preview, transform, _)) => {
                     // spawn fence
-                    commands.spawn(SceneBundle {
-                        scene: fence_model.clone(),
-                        transform: transform.clone(),
-                        ..default()
-                    });
+                    let fence_entity = object_utility.spawn_mesh(fence_model);
+                    commands.entity(fence_entity).insert(transform.clone());
 
                     // update preview
-                    fence.from = place_event.location;
+                    fence_preview.from = place_event.location;
                 }
 
                 // if preview fence doesn't exist, create a new one from given location
                 None => {
-                    commands.spawn((
-                        SceneBundle {
-                            scene: fence_model.clone(),
-                            ..default()
-                        },
+                    let fence_entity = object_utility.spawn_mesh(fence_model);
+                    commands.entity(fence_entity).insert((
                         FencePreview {
                             from: place_event.location,
                         },
+                        Visibility::Hidden,
                     ));
                 }
             },

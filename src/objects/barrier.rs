@@ -8,9 +8,9 @@ pub fn add(world: &mut World) -> Vec<HandleUntyped> {
     let objects = vec![Object {
         name: "Concrete Barrier",
         cost: 20.0,
-        model: asset_server.load("barriers/concrete_post.glb#Scene0"),
+        mesh: asset_server.load("barriers/concrete_post.glb#Mesh0"),
         image: asset_server.load("test.png"),
-        group: ObjectGroup::Barrier(asset_server.load("barriers/concrete_fence.glb#Scene0")),
+        group: ObjectGroup::Barrier(asset_server.load("barriers/concrete_fence.glb#Mesh0")),
     }];
 
     // add each object into assets collection and map to its handle

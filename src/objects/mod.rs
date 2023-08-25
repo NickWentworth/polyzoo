@@ -1,4 +1,6 @@
 use bevy::{
+    ecs::system::SystemParam,
+    gltf::GltfMesh,
     prelude::*,
     reflect::{TypePath, TypeUuid},
 };
@@ -32,14 +34,13 @@ impl FromWorld for ObjectLoader {
     }
 }
 
-// TODO - barriers should also be objects, find a way to define a barrier as an object with an extra field
 /// Base asset for a placeable object
 #[derive(TypeUuid, TypePath)]
 #[uuid = "5981b7ce-340e-4e24-a004-7139c8860455"]
 pub struct Object {
     pub name: &'static str,
     pub cost: Currency,
-    pub model: Handle<Scene>,
+    pub mesh: Handle<GltfMesh>,
     pub image: Handle<Image>,
     pub group: ObjectGroup,
 }
@@ -50,6 +51,65 @@ pub type Currency = f32;
 /// Different classifications for placeable objects
 #[derive(PartialEq)]
 pub enum ObjectGroup {
-    Barrier(Handle<Scene>), // stores the tileable fence model connecting posts
+    Barrier(Handle<GltfMesh>), // stores the fence model connecting posts
     Rock,
+}
+
+/// Helper system param that assists with spawning in and managing objects as entities in-game
+#[derive(SystemParam)]
+pub struct ObjectUtility<'w, 's> {
+    commands: Commands<'w, 's>,
+    objects: Res<'w, Assets<Object>>,
+    gltf_meshes: Res<'w, Assets<GltfMesh>>,
+}
+
+impl<'w, 's> ObjectUtility<'w, 's> {
+    /// Spawns the necessary parent components with children displaying the object's model
+    pub fn spawn_object(&mut self, handle: &Handle<Object>) -> Entity {
+        let parent = self.commands.spawn(SpatialBundle::default()).id();
+        self.set_object(handle, parent)
+    }
+
+    /// Sets the children of the given entity to compatible bundles to display the object's model
+    pub fn set_object(&mut self, handle: &Handle<Object>, parent: Entity) -> Entity {
+        let Some(object) = self.objects.get(handle) else { return parent; };
+        self.set_mesh(&object.mesh.clone(), parent)
+    }
+
+    /// Spawns the necessary parent components with children displaying the given mesh
+    pub fn spawn_mesh(&mut self, handle: &Handle<GltfMesh>) -> Entity {
+        let parent = self.commands.spawn(SpatialBundle::default()).id();
+        self.set_mesh(handle, parent)
+    }
+
+    /// Sets the children of the given entity to compatible bundles to display the given mesh
+    pub fn set_mesh(&mut self, handle: &Handle<GltfMesh>, mut parent: Entity) -> Entity {
+        // clear object children first
+        parent = self.clear_object(parent);
+
+        // then set the children to the new mesh
+        let Some(gltf_mesh) = self.gltf_meshes.get(handle) else { return parent; };
+
+        parent = self
+            .commands
+            .entity(parent)
+            .with_children(|p| {
+                for gltf_primitive in gltf_mesh.primitives.iter() {
+                    p.spawn(PbrBundle {
+                        mesh: gltf_primitive.mesh.clone(),
+                        material: gltf_primitive.material.clone().unwrap_or(Handle::default()),
+                        ..default()
+                    });
+                }
+            })
+            .id();
+
+        parent
+    }
+
+    // TODO - mark mesh children so that only the mesh-related children are deleted, not all children
+    /// Clears all mesh children of the parent
+    pub fn clear_object(&mut self, parent: Entity) -> Entity {
+        self.commands.entity(parent).despawn_descendants().id()
+    }
 }

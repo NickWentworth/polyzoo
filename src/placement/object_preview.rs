@@ -1,5 +1,5 @@
 use super::{ChangePlacementObject, PlaceObject};
-use crate::{camera::CursorRaycast, objects::Object};
+use crate::{camera::CursorRaycast, objects::ObjectUtility};
 use bevy::prelude::*;
 
 /// Marker component for a single and always existing preview entity
@@ -34,42 +34,39 @@ pub fn handle_movement(
 }
 
 pub fn change_placement_object(
-    objects: Res<Assets<Object>>,
+    mut object_utility: ObjectUtility,
     mut object_changes: EventReader<ChangePlacementObject>,
-    mut preview: Query<&mut Handle<Scene>, With<Preview>>,
+
+    preview: Query<Entity, With<Preview>>,
 ) {
-    let mut preview_scene = preview.single_mut();
+    let preview_entity = preview.single();
 
     for change_event in object_changes.iter() {
         match &change_event.object {
-            // if an object is set, get its base model scene handle
+            // if an object is set, swap out the child entities
             Some(handle) => {
-                let object = objects.get(&handle).unwrap();
-                *preview_scene = object.model.clone();
+                object_utility.set_object(handle, preview_entity);
             }
 
             // if no object, then set to default handle, which will not render anything
-            None => *preview_scene = Handle::default(),
-        }
+            None => {
+                object_utility.clear_object(preview_entity);
+            }
+        };
     }
 }
 
 pub fn place_object(
+    mut object_utility: ObjectUtility,
     mut commands: Commands,
-    objects: Res<Assets<Object>>,
+
     mut object_placements: EventReader<PlaceObject>,
     preview: Query<&Transform, With<Preview>>,
 ) {
     let preview_transform = preview.single();
 
     for place_event in object_placements.iter() {
-        let object = objects.get(&place_event.object).unwrap();
-
-        // place an object with the same orientation as the preview
-        commands.spawn(SceneBundle {
-            scene: object.model.clone(),
-            transform: preview_transform.clone(),
-            ..default()
-        });
+        let object = object_utility.spawn_object(&place_event.object);
+        commands.entity(object).insert(preview_transform.clone());
     }
 }
