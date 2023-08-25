@@ -1,7 +1,8 @@
 use super::{ChangePlacementObject, PlaceObject};
 use crate::{
     camera::CursorRaycast,
-    objects::{Object, ObjectGroup, ObjectUtility},
+    objects::{Object, ObjectGroup},
+    utility::MeshUtility,
 };
 use bevy::prelude::*;
 
@@ -56,7 +57,7 @@ pub fn change_placement_object(
 }
 
 pub fn place_object(
-    mut object_utility: ObjectUtility,
+    mut mesh_utility: MeshUtility,
     mut commands: Commands,
     objects: Res<Assets<Object>>,
 
@@ -71,8 +72,7 @@ pub fn place_object(
                 // if preview fence exists, spawn in a permanent fence at the preview's location
                 Some((mut fence_preview, transform, _)) => {
                     // spawn fence
-                    let fence_entity = object_utility.spawn_mesh(fence_model);
-                    commands.entity(fence_entity).insert(transform.clone());
+                    mesh_utility.spawn_mesh_with(fence_model, transform.clone());
 
                     // update preview
                     fence_preview.from = place_event.location;
@@ -80,20 +80,22 @@ pub fn place_object(
 
                 // if preview fence doesn't exist, create a new one from given location
                 None => {
-                    let fence_entity = object_utility.spawn_mesh(fence_model);
-                    commands.entity(fence_entity).insert((
-                        FencePreview {
-                            from: place_event.location,
-                        },
-                        Visibility::Hidden,
-                    ));
+                    mesh_utility.spawn_mesh_with(
+                        fence_model,
+                        (
+                            FencePreview {
+                                from: place_event.location,
+                            },
+                            Visibility::Hidden,
+                        ),
+                    );
                 }
             },
 
             // if it wasn't a barrier that was placed, despawn the fence preview if it exists
             _ => {
                 if let Some((_, _, entity)) = preview.get_single().ok() {
-                    commands.entity(entity).despawn();
+                    commands.entity(entity).despawn_recursive();
                 }
             }
         }

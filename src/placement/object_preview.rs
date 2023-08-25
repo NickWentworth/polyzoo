@@ -1,5 +1,5 @@
 use super::{ChangePlacementObject, PlaceObject};
-use crate::{camera::CursorRaycast, objects::ObjectUtility};
+use crate::{camera::CursorRaycast, objects::Object, utility::MeshUtility};
 use bevy::prelude::*;
 
 /// Marker component for a single and always existing preview entity
@@ -34,9 +34,10 @@ pub fn handle_movement(
 }
 
 pub fn change_placement_object(
-    mut object_utility: ObjectUtility,
-    mut object_changes: EventReader<ChangePlacementObject>,
+    mut mesh_utility: MeshUtility,
+    objects: Res<Assets<Object>>,
 
+    mut object_changes: EventReader<ChangePlacementObject>,
     preview: Query<Entity, With<Preview>>,
 ) {
     let preview_entity = preview.single();
@@ -45,20 +46,21 @@ pub fn change_placement_object(
         match &change_event.object {
             // if an object is set, swap out the child entities
             Some(handle) => {
-                object_utility.set_object(handle, preview_entity);
+                let object = objects.get(handle).unwrap();
+                mesh_utility.set_mesh(&object.mesh, preview_entity);
             }
 
             // if no object, then set to default handle, which will not render anything
             None => {
-                object_utility.clear_object(preview_entity);
+                mesh_utility.clear_mesh(preview_entity);
             }
         };
     }
 }
 
 pub fn place_object(
-    mut object_utility: ObjectUtility,
-    mut commands: Commands,
+    mut mesh_utility: MeshUtility,
+    objects: Res<Assets<Object>>,
 
     mut object_placements: EventReader<PlaceObject>,
     preview: Query<&Transform, With<Preview>>,
@@ -66,7 +68,7 @@ pub fn place_object(
     let preview_transform = preview.single();
 
     for place_event in object_placements.iter() {
-        let object = object_utility.spawn_object(&place_event.object);
-        commands.entity(object).insert(preview_transform.clone());
+        let object = objects.get(&place_event.object).unwrap();
+        mesh_utility.spawn_mesh_with(&object.mesh, preview_transform.clone());
     }
 }

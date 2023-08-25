@@ -5,6 +5,7 @@ mod camera;
 mod objects;
 mod placement;
 mod ui;
+mod utility;
 mod zoo;
 
 fn main() {
