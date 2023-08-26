@@ -68,10 +68,15 @@ pub(super) fn setup_toolbar(
                 .spawn((popup_menu.clone(), BuyMenu::Build))
                 .with_children(|parent| {
                     // map all barriers into purchase buttons
-                    for (handle_id, object) in objects
+                    let mut barriers = objects
                         .iter()
                         .filter(|(_, obj)| matches!(obj.group, ObjectGroup::Barrier(_)))
-                    {
+                        .collect::<Vec<_>>();
+
+                    // sort by barrier cost
+                    barriers.sort_by(|(_, a), (_, b)| a.cost.partial_cmp(&b.cost).unwrap());
+
+                    for (handle_id, object) in barriers {
                         buy_button(object, objects.get_handle(handle_id), parent, &theme);
                     }
                 });
@@ -87,10 +92,16 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Nature))
                 .with_children(|parent| {
-                    for (handle_id, object) in objects
+                    let mut rocks = objects
                         .iter()
                         .filter(|(_, obj)| obj.group == ObjectGroup::Rock)
-                    {
+                        .collect::<Vec<_>>();
+
+                    // TODO - nature should probably be sorted by biome when its added
+                    // sort by name for now
+                    rocks.sort_by_key(|(_, obj)| obj.name);
+
+                    for (handle_id, object) in rocks {
                         buy_button(object, objects.get_handle(handle_id), parent, &theme);
                     }
                 });
