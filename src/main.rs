@@ -26,6 +26,10 @@ fn main() {
         .run();
 }
 
+/// Marker component for ground plane
+#[derive(Component)]
+struct Ground;
+
 fn setup_demo_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -50,5 +54,6 @@ fn setup_demo_scene(
             material: materials.add(Color::DARK_GREEN.into()),
             ..default()
         },
+        Ground,
     ));
 }

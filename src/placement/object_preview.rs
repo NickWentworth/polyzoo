@@ -23,7 +23,7 @@ pub fn handle_movement(
 ) {
     let (mut transform, mut visibility) = preview.single_mut();
 
-    match cursor_raycast.point() {
+    match cursor_raycast.ground_point() {
         Some(point) => {
             transform.translation = point;
             *visibility = Visibility::Visible;

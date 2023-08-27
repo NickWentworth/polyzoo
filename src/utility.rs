@@ -1,10 +1,12 @@
 use bevy::{ecs::system::SystemParam, gltf::GltfMesh, prelude::*};
+use bevy_rapier3d::prelude::*;
 
 /// System param that assists with spawning in and managing meshes as entities in-game
 #[derive(SystemParam)]
 pub struct MeshUtility<'w, 's> {
     commands: Commands<'w, 's>,
     gltf_meshes: Res<'w, Assets<GltfMesh>>,
+    meshes: Res<'w, Assets<Mesh>>,
 }
 
 impl<'w, 's> MeshUtility<'w, 's> {
@@ -33,11 +35,18 @@ impl<'w, 's> MeshUtility<'w, 's> {
             .entity(parent)
             .with_children(|p| {
                 for gltf_primitive in gltf_mesh.primitives.iter() {
-                    p.spawn(PbrBundle {
-                        mesh: gltf_primitive.mesh.clone(),
-                        material: gltf_primitive.material.clone().unwrap_or(Handle::default()),
-                        ..default()
-                    });
+                    p.spawn((
+                        PbrBundle {
+                            mesh: gltf_primitive.mesh.clone(),
+                            material: gltf_primitive.material.clone().unwrap_or(Handle::default()),
+                            ..default()
+                        },
+                        Collider::from_bevy_mesh(
+                            &self.meshes.get(&gltf_primitive.mesh).unwrap(),
+                            &ComputedColliderShape::TriMesh,
+                        )
+                        .unwrap(),
+                    ));
                 }
             })
             .id();

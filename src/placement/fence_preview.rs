@@ -20,7 +20,7 @@ pub fn handle_movement(
     mut preview: Query<(&mut Transform, &mut Visibility, &FencePreview)>,
 ) {
     if let Some((mut transform, mut visibility, fence)) = preview.get_single_mut().ok() {
-        match cursor_raycast.point() {
+        match cursor_raycast.ground_point() {
             Some(point) => {
                 // calculate midpoint, angle, and length for the fence preview
                 let midpoint = fence.from.lerp(point, 0.5);

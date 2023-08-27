@@ -73,7 +73,7 @@ fn change_placement_object(
 // TODO - check for collisions as well, likely has to be done through events from preview systems
 /// Handles keeping the `Placement` resource's valid placement field up to date
 fn handle_validity(mut placement: ResMut<Placement>, cursor_raycast: CursorRaycast) {
-    placement.valid = cursor_raycast.point().is_some();
+    placement.valid = cursor_raycast.ground_point().is_some();
 }
 
 /// Handles writing `PlaceObject` events to preview systems when a valid placement occurs
@@ -92,7 +92,7 @@ fn handle_placement(
             // send object placement event to previews
             object_placements.send(PlaceObject {
                 object: object_handle.clone(),
-                location: cursor_raycast.point().unwrap(),
+                location: cursor_raycast.ground_point().unwrap(),
             });
 
             // send zoo balance change event to zoo

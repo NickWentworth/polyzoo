@@ -1,4 +1,4 @@
-use crate::ui::UiQuery;
+use crate::{ui::UiQuery, Ground};
 use bevy::{
     ecs::system::SystemParam,
     input::mouse::{MouseMotion, MouseWheel},
@@ -116,14 +116,17 @@ pub struct CursorRaycast<'w, 's> {
     main_camera: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<CameraController>>,
     main_window: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     rapier: Res<'w, RapierContext>,
+    ground_query: Query<'w, 's, Entity, With<Ground>>,
     ui: UiQuery<'w, 's>,
 }
 
 impl<'w, 's> CursorRaycast<'w, 's> {
     /// Cast a ray from the camera at the cursor location into the world
     ///
+    /// Accepts a filter argument to control which colliders are included in the raycast
+    ///
     /// Returns the first entity hit and the location of the hit, if a hit occurs
-    pub fn raycast(&self) -> Option<(Entity, Vec3)> {
+    pub fn raycast(&self, filter: QueryFilter<'_>) -> Option<(Entity, Vec3)> {
         let (camera, camera_transform) = self.main_camera.single();
         let window = self.main_window.single();
 
@@ -137,21 +140,20 @@ impl<'w, 's> CursorRaycast<'w, 's> {
         let ray = camera.viewport_to_world(camera_transform, cursor_position)?;
 
         // cast the ray
-        let (entity, distance) = self.rapier.cast_ray(
-            ray.origin,
-            ray.direction,
-            f32::MAX,
-            false,
-            QueryFilter::default(),
-        )?;
+        let (entity, distance) =
+            self.rapier
+                .cast_ray(ray.origin, ray.direction, f32::MAX, false, filter)?;
 
         // if everything worked, return the entity and distance to the collision point
         Some((entity, ray.get_point(distance)))
     }
 
-    /// Do raycast, but only return location of the hit, if it occurs
-    pub fn point(&self) -> Option<Vec3> {
-        match self.raycast() {
+    /// Return the point on the ground plane that the mouse is over
+    pub fn ground_point(&self) -> Option<Vec3> {
+        let ground_predicate = |entity: Entity| self.ground_query.contains(entity);
+        let ground_filter = QueryFilter::default().predicate(&ground_predicate);
+
+        match self.raycast(ground_filter) {
             Some((_, point)) => Some(point),
             None => None,
         }
