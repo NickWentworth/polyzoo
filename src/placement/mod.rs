@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 mod fence_preview;
 mod object_preview;
+mod selectable;
 
 pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
@@ -33,16 +34,24 @@ impl Plugin for PlacementPlugin {
                     fence_preview::change_placement_object,
                     fence_preview::place_object,
                 ),
-            );
+            )
+            .add_systems(Update, selectable::handle_selection);
     }
 }
 
 #[derive(Resource, Default)]
-struct Placement {
+pub struct Placement {
     /// Handle to the object currently being placed, if it exists
     object: Option<Handle<Object>>,
     /// Validity of the current position of the placed object
     valid: bool,
+}
+
+impl Placement {
+    /// Returns whether or not the placement resource is currently placing an object
+    pub fn is_placing(&self) -> bool {
+        self.object.is_some()
+    }
 }
 
 /// Event for systems to change the object being placed

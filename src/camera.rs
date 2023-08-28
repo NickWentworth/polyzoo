@@ -153,9 +153,11 @@ impl<'w, 's> CursorRaycast<'w, 's> {
         let ground_predicate = |entity: Entity| self.ground_query.contains(entity);
         let ground_filter = QueryFilter::default().predicate(&ground_predicate);
 
-        match self.raycast(ground_filter) {
-            Some((_, point)) => Some(point),
-            None => None,
-        }
+        self.raycast(ground_filter).map(|hit| hit.1)
+    }
+
+    /// Return the nearest entity clicked on by the cursor
+    pub fn first_entity(&self) -> Option<Entity> {
+        self.raycast(QueryFilter::default()).map(|hit| hit.0)
     }
 }

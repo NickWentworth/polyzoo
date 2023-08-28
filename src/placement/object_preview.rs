@@ -58,6 +58,8 @@ pub fn change_placement_object(
     }
 }
 
+// FIXME - sometimes while placing barriers a state will occur where the cursor ground position
+//         is not found and will return None, even if the cursor is still directly over ground
 pub fn place_object(
     mut mesh_utility: MeshUtility,
     objects: Res<Assets<Object>>,
@@ -69,6 +71,9 @@ pub fn place_object(
 
     for place_event in object_placements.iter() {
         let object = objects.get(&place_event.object).unwrap();
-        mesh_utility.spawn_mesh_with(&object.mesh, preview_transform.clone());
+        mesh_utility.spawn_mesh_with(
+            &object.mesh,
+            (preview_transform.clone(), place_event.object.clone()),
+        );
     }
 }
