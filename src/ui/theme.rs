@@ -64,7 +64,7 @@ impl UiTheme {
     }
 
     /// Dark text component
-    pub fn dark_text(&self, text: &str, font_size: f32) -> impl Bundle {
+    pub fn dark_text(&self, text: &str, font_size: f32) -> TextBundle {
         TextBundle::from_section(
             text,
             TextStyle {
@@ -76,7 +76,7 @@ impl UiTheme {
     }
 
     /// White text component
-    pub fn white_text(&self, text: &str, font_size: f32) -> impl Bundle {
+    pub fn white_text(&self, text: &str, font_size: f32) -> TextBundle {
         TextBundle::from_section(
             text,
             TextStyle {

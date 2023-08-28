@@ -1,6 +1,7 @@
 use crate::objects::Currency;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
+mod misc;
 mod tabs;
 mod theme;
 mod toolbar;
@@ -16,7 +17,11 @@ impl Plugin for UiPlugin {
             .add_systems(Startup, toolbar::setup_toolbar)
             .add_systems(Update, toolbar::toolbar_interactions)
             .add_systems(Update, toolbar::toolbar_callbacks)
-            .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>);
+            .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>)
+            // misc systems
+            .add_systems(Startup, misc::setup_deselect_prompt)
+            .add_systems(Update, misc::deselect_prompt_interactions)
+            .add_systems(Update, misc::deselect_prompt_callbacks);
     }
 }
 
