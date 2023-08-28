@@ -5,6 +5,8 @@ mod fence_preview;
 mod object_preview;
 mod selectable;
 
+pub use selectable::SelectObject;
+
 pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
     fn build(&self, app: &mut App) {
@@ -35,6 +37,8 @@ impl Plugin for PlacementPlugin {
                     fence_preview::place_object,
                 ),
             )
+            // object selection systems
+            .add_event::<selectable::SelectObject>()
             .add_systems(Update, selectable::handle_selection);
     }
 }

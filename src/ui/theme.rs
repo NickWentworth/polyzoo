@@ -86,6 +86,34 @@ impl UiTheme {
             },
         )
     }
+
+    /// Spawn in a light button with icon
+    pub fn spawn_light_icon_button(
+        &self,
+        parent: &mut ChildBuilder,
+        size: Val,
+        icon: UiImage,
+        bundle: impl Bundle,
+    ) {
+        parent
+            .spawn((self.light_button(), bundle))
+            .insert(Style {
+                padding: UiRect::all(Val::Px(2.0)),
+                ..default()
+            })
+            .with_children(|parent| {
+                parent.spawn(ImageBundle {
+                    image: icon,
+                    style: Style {
+                        width: size,
+                        height: size,
+                        ..default()
+                    },
+                    background_color: self.dark.into(),
+                    ..default()
+                });
+            });
+    }
 }
 
 /// All systems needed for component interactivity
