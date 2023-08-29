@@ -14,16 +14,24 @@ pub struct UiTheme {
     pub medium: Color,
     pub dark: Color,
     pub accent: Color,
+
+    pub font_regular: Handle<Font>,
+    pub font_bold: Handle<Font>,
 }
 
-impl Default for UiTheme {
-    fn default() -> Self {
+impl FromWorld for UiTheme {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+
         Self {
             white: Color::hex("#E8EDED").unwrap(),
             light: Color::hex("#97ACAF").unwrap(),
             medium: Color::hex("#4F6367").unwrap(),
             dark: Color::hex("#354345").unwrap(),
             accent: Color::hex("#F26430").unwrap(),
+
+            font_regular: asset_server.load("fonts/urbanist_regular.ttf"),
+            font_bold: asset_server.load("fonts/urbanist_bold.ttf"),
         }
     }
 }
@@ -68,9 +76,9 @@ impl UiTheme {
         TextBundle::from_section(
             text,
             TextStyle {
+                font: self.font_bold.clone(),
                 font_size,
                 color: self.dark,
-                ..default()
             },
         )
     }
@@ -80,9 +88,9 @@ impl UiTheme {
         TextBundle::from_section(
             text,
             TextStyle {
+                font: self.font_bold.clone(),
                 font_size,
                 color: self.white,
-                ..default()
             },
         )
     }
