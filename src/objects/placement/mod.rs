@@ -3,14 +3,10 @@ use bevy::prelude::*;
 
 mod fence_preview;
 mod object_preview;
-mod selectable;
 
-pub use selectable::SelectObject;
 
-pub struct PlacementPlugin;
-impl Plugin for PlacementPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<Placement>()
+pub fn build(app: &mut App) {
+    app.init_resource::<Placement>()
             .add_event::<ChangePlacementObject>()
             .add_event::<PlaceObject>()
             // placement resource systems
@@ -36,11 +32,7 @@ impl Plugin for PlacementPlugin {
                     fence_preview::change_placement_object,
                     fence_preview::place_object,
                 ),
-            )
-            // object selection systems
-            .add_event::<selectable::SelectObject>()
-            .add_systems(Update, selectable::handle_selection);
-    }
+            );
 }
 
 #[derive(Resource, Default)]

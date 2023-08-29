@@ -1,5 +1,5 @@
 use super::theme::UiTheme;
-use crate::{objects::Object, placement::SelectObject};
+use crate::objects::{Object, SelectObject};
 use bevy::prelude::*;
 
 #[derive(Component)]

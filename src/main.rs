@@ -3,7 +3,6 @@ use bevy_rapier3d::prelude::*;
 
 mod camera;
 mod objects;
-mod placement;
 mod ui;
 mod utility;
 mod zoo;
@@ -18,7 +17,6 @@ fn main() {
         .add_plugins((
             camera::ControllableCameraPlugin,
             objects::ObjectsPlugin,
-            placement::PlacementPlugin,
             ui::UiPlugin,
             zoo::ZooPlugin,
         ))

@@ -1,12 +1,9 @@
-use super::Placement;
-use crate::{camera::CursorRaycast, objects::Object};
+use super::SelectObject;
+use crate::{
+    camera::CursorRaycast,
+    objects::{placement::Placement, Object},
+};
 use bevy::prelude::*;
-
-/// Event for swapping the clicked-on object in the world
-#[derive(Event)]
-pub struct SelectObject {
-    pub object: Option<Handle<Object>>,
-}
 
 pub fn handle_selection(
     placement: Res<Placement>,

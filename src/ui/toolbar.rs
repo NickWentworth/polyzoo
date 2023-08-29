@@ -1,7 +1,6 @@
 use super::{formatted_currency, tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
 use crate::{
-    objects::{Object, ObjectGroup},
-    placement::ChangePlacementObject,
+    objects::{ChangePlacementObject, Object, ObjectGroup},
     zoo::{OnZooBalanceChanged, Zoo},
 };
 use bevy::prelude::*;

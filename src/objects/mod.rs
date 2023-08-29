@@ -4,32 +4,21 @@ use bevy::{
     reflect::{TypePath, TypeUuid},
 };
 
-mod barrier;
-mod nature;
+mod data;
+mod interaction;
+mod placement;
+
+pub use interaction::SelectObject;
+pub use placement::ChangePlacementObject;
 
 pub struct ObjectsPlugin;
 impl Plugin for ObjectsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_asset::<Object>().init_resource::<ObjectLoader>();
-    }
-}
+        app.add_asset::<Object>()
+            .init_resource::<data::ObjectLoader>();
 
-/// Resource containing all pre-loaded object data in untyped handles, so that it isn't unloaded
-///
-/// For now, all objects are also stored in the ui, so data stems from there
-#[derive(Resource)]
-struct ObjectLoader {
-    _data: Vec<HandleUntyped>,
-}
-
-impl FromWorld for ObjectLoader {
-    fn from_world(world: &mut World) -> Self {
-        let mut data = Vec::new();
-
-        data.extend(barrier::add(world));
-        data.extend(nature::add(world));
-
-        Self { _data: data }
+        placement::build(app);
+        interaction::build(app);
     }
 }
 

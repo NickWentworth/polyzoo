@@ -1,4 +1,4 @@
-use crate::{objects::Object, placement::ChangePlacementObject};
+use crate::objects::{ChangePlacementObject, Object};
 use bevy::prelude::*;
 
 use super::theme::UiTheme;
