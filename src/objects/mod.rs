@@ -7,6 +7,7 @@ use bevy::{
 mod data;
 mod interaction;
 mod placement;
+mod utility;
 
 pub use interaction::SelectObject;
 pub use placement::ChangePlacementObject;
@@ -39,6 +40,7 @@ pub type Currency = f32;
 /// Different classifications for placeable objects
 #[derive(PartialEq)]
 pub enum ObjectGroup {
-    Barrier(Handle<GltfMesh>), // stores the fence model connecting posts
+    BarrierPost(Handle<Object>), // stores the fence object that connects posts
+    BarrierFence,
     Rock,
 }

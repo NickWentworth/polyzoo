@@ -4,7 +4,6 @@ use bevy_rapier3d::prelude::*;
 mod camera;
 mod objects;
 mod ui;
-mod utility;
 mod zoo;
 
 fn main() {

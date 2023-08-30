@@ -69,7 +69,7 @@ pub(super) fn setup_toolbar(
                     // map all barriers into purchase buttons
                     let mut barriers = objects
                         .iter()
-                        .filter(|(_, obj)| matches!(obj.group, ObjectGroup::Barrier(_)))
+                        .filter(|(_, obj)| matches!(obj.group, ObjectGroup::BarrierPost(_)))
                         .collect::<Vec<_>>();
 
                     // sort by barrier cost

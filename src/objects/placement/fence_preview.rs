@@ -1,8 +1,7 @@
 use super::{ChangePlacementObject, PlaceObject};
 use crate::{
     camera::CursorRaycast,
-    objects::{Object, ObjectGroup},
-    utility::MeshUtility,
+    objects::{utility::ObjectUtility, Object, ObjectGroup},
 };
 use bevy::prelude::*;
 
@@ -44,23 +43,21 @@ pub fn handle_movement(
 }
 
 pub fn change_placement_object(
-    mut commands: Commands,
+    mut object_utility: ObjectUtility,
     mut object_changes: EventReader<ChangePlacementObject>,
     preview: Query<Entity, With<FencePreview>>,
 ) {
     // despawn preview on placement object change
     for _ in object_changes.iter() {
         if let Some(entity) = preview.get_single().ok() {
-            commands.entity(entity).despawn_recursive();
+            object_utility.despawn_object(entity);
         }
     }
 }
 
 pub fn place_object(
-    mut mesh_utility: MeshUtility,
-    mut commands: Commands,
+    mut object_utility: ObjectUtility,
     objects: Res<Assets<Object>>,
-
     mut object_placements: EventReader<PlaceObject>,
     mut preview: Query<(&mut FencePreview, &Transform, Entity)>,
 ) {
@@ -68,11 +65,11 @@ pub fn place_object(
         let object = objects.get(&place_event.object).unwrap();
 
         match &object.group {
-            ObjectGroup::Barrier(fence_model) => match preview.get_single_mut().ok() {
+            ObjectGroup::BarrierPost(fence_handle) => match preview.get_single_mut().ok() {
                 // if preview fence exists, spawn in a permanent fence at the preview's location
                 Some((mut fence_preview, transform, _)) => {
                     // spawn fence
-                    mesh_utility.spawn_mesh_with(fence_model, transform.clone());
+                    object_utility.spawn_object_with(fence_handle, transform.clone());
 
                     // update preview
                     fence_preview.from = place_event.location;
@@ -80,8 +77,8 @@ pub fn place_object(
 
                 // if preview fence doesn't exist, create a new one from given location
                 None => {
-                    mesh_utility.spawn_mesh_with(
-                        fence_model,
+                    object_utility.spawn_object_with(
+                        fence_handle,
                         (
                             FencePreview {
                                 from: place_event.location,
@@ -95,7 +92,7 @@ pub fn place_object(
             // if it wasn't a barrier that was placed, despawn the fence preview if it exists
             _ => {
                 if let Some((_, _, entity)) = preview.get_single().ok() {
-                    commands.entity(entity).despawn_recursive();
+                    object_utility.despawn_object(entity);
                 }
             }
         }

@@ -1,5 +1,5 @@
 use super::{ChangePlacementObject, PlaceObject};
-use crate::{camera::CursorRaycast, objects::Object, utility::MeshUtility};
+use crate::{camera::CursorRaycast, objects::utility::ObjectUtility};
 use bevy::prelude::*;
 
 /// Marker component for a single and always existing preview entity
@@ -34,9 +34,7 @@ pub fn handle_movement(
 }
 
 pub fn change_placement_object(
-    mut mesh_utility: MeshUtility,
-    objects: Res<Assets<Object>>,
-
+    mut object_utility: ObjectUtility,
     mut object_changes: EventReader<ChangePlacementObject>,
     preview: Query<Entity, With<Preview>>,
 ) {
@@ -45,15 +43,10 @@ pub fn change_placement_object(
     for change_event in object_changes.iter() {
         match &change_event.object {
             // if an object is set, swap out the child entities
-            Some(handle) => {
-                let object = objects.get(handle).unwrap();
-                mesh_utility.set_mesh(&object.mesh, preview_entity);
-            }
+            Some(handle) => object_utility.set_object(preview_entity, handle),
 
             // if no object, then set to default handle, which will not render anything
-            None => {
-                mesh_utility.clear_mesh(preview_entity);
-            }
+            None => object_utility.clear_object(preview_entity),
         };
     }
 }
@@ -61,19 +54,13 @@ pub fn change_placement_object(
 // FIXME - sometimes while placing barriers a state will occur where the cursor ground position
 //         is not found and will return None, even if the cursor is still directly over ground
 pub fn place_object(
-    mut mesh_utility: MeshUtility,
-    objects: Res<Assets<Object>>,
-
+    mut object_utility: ObjectUtility,
     mut object_placements: EventReader<PlaceObject>,
     preview: Query<&Transform, With<Preview>>,
 ) {
     let preview_transform = preview.single();
 
     for place_event in object_placements.iter() {
-        let object = objects.get(&place_event.object).unwrap();
-        mesh_utility.spawn_mesh_with(
-            &object.mesh,
-            (preview_transform.clone(), place_event.object.clone()),
-        );
+        object_utility.spawn_object_with(&place_event.object, preview_transform.clone());
     }
 }
