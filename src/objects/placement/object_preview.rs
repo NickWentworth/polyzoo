@@ -6,15 +6,9 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Preview;
 
-pub fn setup(mut commands: Commands) {
+pub fn setup(mut object_utility: ObjectUtility) {
     // spawn in preview entity that is hidden
-    commands.spawn((
-        SceneBundle {
-            visibility: Visibility::Hidden,
-            ..default()
-        },
-        Preview,
-    ));
+    object_utility.spawn_object_with(&Handle::default(), (Preview, Visibility::Hidden));
 }
 
 pub fn handle_movement(

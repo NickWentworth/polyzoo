@@ -4,35 +4,35 @@ use bevy::prelude::*;
 mod fence_preview;
 mod object_preview;
 
-
 pub fn build(app: &mut App) {
     app.init_resource::<Placement>()
-            .add_event::<ChangePlacementObject>()
-            .add_event::<PlaceObject>()
-            // placement resource systems
-            .add_systems(
-                Update,
-                (change_placement_object, handle_validity, handle_placement),
-            )
-            // object preview systems
-            .add_systems(Startup, object_preview::setup)
-            .add_systems(
-                Update,
-                (
-                    object_preview::handle_movement,
-                    object_preview::change_placement_object,
-                    object_preview::place_object,
-                ),
-            )
-            // fence preview systems
-            .add_systems(
-                Update,
-                (
-                    fence_preview::handle_movement,
-                    fence_preview::change_placement_object,
-                    fence_preview::place_object,
-                ),
-            );
+        .add_event::<ChangePlacementObject>()
+        .add_event::<PlaceObject>()
+        // placement resource systems
+        .add_systems(
+            Update,
+            (change_placement_object, handle_validity, handle_placement),
+        )
+        // object preview systems
+        .add_systems(Startup, object_preview::setup)
+        .add_systems(
+            Update,
+            (
+                object_preview::handle_movement,
+                object_preview::change_placement_object,
+                object_preview::place_object,
+            ),
+        )
+        // fence preview systems
+        .add_systems(Startup, fence_preview::setup)
+        .add_systems(
+            Update,
+            (
+                fence_preview::handle_movement,
+                fence_preview::change_placement_object,
+                fence_preview::place_object,
+            ),
+        );
 }
 
 #[derive(Resource, Default)]
