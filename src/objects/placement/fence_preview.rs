@@ -1,7 +1,7 @@
 use super::{ChangePlacementObject, PlaceObject};
 use crate::{
     camera::CursorRaycast,
-    objects::{utility::ObjectUtility, Object, ObjectGroup},
+    objects::{Object, ObjectGroup},
 };
 use bevy::prelude::*;
 
@@ -15,18 +15,19 @@ pub struct FencePreview {
     from: Vec3,
 }
 
-pub fn setup(mut object_utility: ObjectUtility) {
+pub fn setup(mut commands: Commands) {
     // spawn in preview entity that is hidden
-    object_utility.spawn_object_with(
-        &Handle::default(),
-        (
-            FencePreview {
-                enabled: false,
-                from: Vec3::ZERO,
-            },
-            Visibility::Hidden,
-        ),
-    );
+    commands.spawn((
+        SpatialBundle {
+            visibility: Visibility::Hidden,
+            ..default()
+        },
+        Handle::<Object>::default(),
+        FencePreview {
+            enabled: false,
+            from: Vec3::ZERO,
+        },
+    ));
 }
 
 pub fn handle_movement(
@@ -64,49 +65,56 @@ pub fn handle_movement(
 }
 
 pub fn change_placement_object(
+    mut commands: Commands,
     mut object_changes: EventReader<ChangePlacementObject>,
-    mut preview: Query<&mut FencePreview>,
+    mut preview: Query<(&mut FencePreview, Entity)>,
 ) {
-    let mut fence = preview.single_mut();
+    let (mut fence, preview_entity) = preview.single_mut();
 
     for _ in object_changes.iter() {
         // disable preview on placement object change
+        commands
+            .entity(preview_entity)
+            .insert(Handle::<Object>::default());
         fence.enabled = false;
     }
 }
 
 pub fn place_object(
-    mut object_utility: ObjectUtility,
+    mut commands: Commands,
     objects: Res<Assets<Object>>,
     mut object_placements: EventReader<PlaceObject>,
     mut preview: Query<(&mut FencePreview, &Transform, Entity)>,
 ) {
-    let (mut fence, transform, entity) = preview.single_mut();
+    let (mut fence, transform, preview_entity) = preview.single_mut();
 
     for place_event in object_placements.iter() {
         let placed_object = objects.get(&place_event.object).unwrap();
 
         match &placed_object.group {
-            ObjectGroup::BarrierPost(fence_handle) => match fence.enabled {
-                // if preview fence is enabled, spawn in a permanent fence at the preview's location
-                true => {
-                    // spawn fence at preview location
-                    object_utility.spawn_object_with(fence_handle, transform.clone());
+            ObjectGroup::BarrierPost(fence_handle) => {
+                match fence.enabled {
+                    // if preview fence is enabled, spawn in a permanent fence at preview location
+                    true => {
+                        commands.spawn((
+                            SpatialBundle {
+                                transform: transform.clone(),
+                                ..default()
+                            },
+                            fence_handle.clone(),
+                        ));
+                    }
 
-                    // and update preview component
-                    fence.from = place_event.location;
-                }
+                    // if preview fence is disabled, enable it for the next placed post
+                    false => {
+                        commands.entity(preview_entity).insert(fence_handle.clone());
+                    }
+                };
 
-                // if preview fence is disabled, enable it and set its starting point
-                false => {
-                    // set preview's object
-                    object_utility.set_object(entity, fence_handle);
-
-                    // update preview component
-                    fence.enabled = true;
-                    fence.from = place_event.location;
-                }
-            },
+                // update preview component
+                fence.enabled = true;
+                fence.from = place_event.location;
+            }
 
             // if it wasn't a barrier that was placed, disable the fence preview
             _ => fence.enabled = false,

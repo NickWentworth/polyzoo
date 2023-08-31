@@ -16,7 +16,8 @@ pub struct ObjectsPlugin;
 impl Plugin for ObjectsPlugin {
     fn build(&self, app: &mut App) {
         app.add_asset::<Object>()
-            .init_resource::<data::ObjectLoader>();
+            .init_resource::<data::ObjectLoader>()
+            .add_systems(Update, utility::handle_object_changes);
 
         placement::build(app);
         interaction::build(app);
