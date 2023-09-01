@@ -23,9 +23,9 @@ fn main() {
         .run();
 }
 
-/// Marker component for ground plane
-#[derive(Component)]
-struct Ground;
+// collision groups
+const GROUND: Group = Group::GROUP_1;
+const OBJECTS: Group = Group::GROUP_2;
 
 fn setup_demo_scene(
     mut commands: Commands,
@@ -45,12 +45,12 @@ fn setup_demo_scene(
     // ground plane
     let ground_plane = Mesh::from(shape::Plane::from_size(10.0));
     commands.spawn((
-        Collider::from_bevy_mesh(&ground_plane, &ComputedColliderShape::ConvexHull).unwrap(),
         PbrBundle {
-            mesh: meshes.add(ground_plane),
+            mesh: meshes.add(ground_plane.clone()),
             material: materials.add(Color::DARK_GREEN.into()),
             ..default()
         },
-        Ground,
+        Collider::from_bevy_mesh(&ground_plane, &ComputedColliderShape::ConvexHull).unwrap(),
+        CollisionGroups::new(GROUND, Group::ALL),
     ));
 }

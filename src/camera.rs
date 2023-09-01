@@ -1,4 +1,4 @@
-use crate::{ui::UiQuery, Ground};
+use crate::{ui::UiQuery, GROUND};
 use bevy::{
     ecs::system::SystemParam,
     input::mouse::{MouseMotion, MouseWheel},
@@ -116,7 +116,6 @@ pub struct CursorRaycast<'w, 's> {
     main_camera: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<CameraController>>,
     main_window: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     rapier: Res<'w, RapierContext>,
-    ground_query: Query<'w, 's, Entity, With<Ground>>,
     ui: UiQuery<'w, 's>,
 }
 
@@ -150,9 +149,7 @@ impl<'w, 's> CursorRaycast<'w, 's> {
 
     /// Return the point on the ground plane that the mouse is over
     pub fn ground_point(&self) -> Option<Vec3> {
-        let ground_predicate = |entity: Entity| self.ground_query.contains(entity);
-        let ground_filter = QueryFilter::default().predicate(&ground_predicate);
-
+        let ground_filter = QueryFilter::default().groups(CollisionGroups::new(GROUND, GROUND));
         self.raycast(ground_filter).map(|hit| hit.1)
     }
 
