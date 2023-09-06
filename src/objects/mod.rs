@@ -9,7 +9,9 @@ mod interaction;
 mod placement;
 mod utility;
 
-pub use interaction::SelectObject;
+pub use interaction::{
+    DeselectObject, SelectObject, SellSelectedObject, TransformGizmoSelectedObject,
+};
 pub use placement::ChangePlacementObject;
 
 pub struct ObjectsPlugin;
@@ -33,6 +35,16 @@ pub struct Object {
     pub mesh: Handle<GltfMesh>,
     pub image: Handle<Image>,
     pub group: ObjectGroup,
+}
+
+impl Object {
+    /// Percentage that selling will refund the original cost
+    const SELL_MODIFIER: f32 = 0.7;
+
+    /// The calculated amount this object is worth from selling
+    pub fn sell_value(&self) -> Currency {
+        self.cost * Self::SELL_MODIFIER
+    }
 }
 
 /// Type alias for money variables
