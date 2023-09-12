@@ -1,4 +1,4 @@
-use crate::objects::{ChangePlacementObject, Object};
+use crate::props::{Prop, SetPreviewProp, UnsetPreviewProp};
 use bevy::prelude::*;
 
 use super::theme::UiTheme;
@@ -34,28 +34,29 @@ pub fn setup_deselect_prompt(mut commands: Commands, theme: Res<UiTheme>) {
 
 pub fn deselect_prompt_interactions(
     keys: Res<Input<KeyCode>>,
-    mut preview_changes: EventWriter<ChangePlacementObject>,
+    mut unset_previews: EventWriter<UnsetPreviewProp>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
-        preview_changes.send(ChangePlacementObject { object: None });
+        unset_previews.send(UnsetPreviewProp);
     }
 }
 
-pub fn deselect_prompt_callbacks(
-    objects: Res<Assets<Object>>,
-    mut preview_changes: EventReader<ChangePlacementObject>,
+pub fn deselect_prompt_callbacks<P: Prop>(
+    props: Res<Assets<P>>,
+    mut preview_sets: EventReader<SetPreviewProp<P>>,
+    mut preview_unsets: EventReader<UnsetPreviewProp>,
     mut placement_message: Query<&mut Text, With<PlacementCloseMessage>>,
 ) {
-    for preview_change in preview_changes.iter() {
-        placement_message.single_mut().sections[0].value = match &preview_change.object {
-            Some(handle) => {
-                let object = objects.get(handle).unwrap();
-                format!(
-                    "Currently placing: {}\nPress [esc] to deselect",
-                    object.name
-                )
-            }
-            None => String::from(""),
-        }
+    for _ in preview_unsets.iter() {
+        placement_message.single_mut().sections[0].value = String::from("");
+    }
+
+    for set in preview_sets.iter() {
+        let prop = props.get(&set.handle).unwrap();
+
+        placement_message.single_mut().sections[0].value = format!(
+            "Currently placing: {}\nPress [esc] to deselect",
+            prop.name()
+        );
     }
 }

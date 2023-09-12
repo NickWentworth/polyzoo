@@ -1,4 +1,4 @@
-use crate::objects::Currency;
+use crate::Currency;
 pub use bevy::prelude::*;
 
 pub struct ZooPlugin;
