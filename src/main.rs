@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 mod camera;
-mod props;
+mod objects;
+mod placement;
 mod ui;
 mod zoo;
 
@@ -15,7 +16,8 @@ fn main() {
         ))
         .add_plugins((
             camera::ControllableCameraPlugin,
-            props::PropPlugin,
+            objects::ObjectPlugin,
+            placement::PlacementPlugin,
             ui::UiPlugin,
             zoo::ZooPlugin,
         ))
@@ -28,7 +30,7 @@ type Currency = f32;
 
 // collision groups
 const GROUND: Group = Group::GROUP_1;
-const PROPS: Group = Group::GROUP_2;
+const OBJECTS: Group = Group::GROUP_2;
 
 fn setup_demo_scene(
     mut commands: Commands,

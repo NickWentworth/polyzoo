@@ -1,4 +1,4 @@
-use crate::PROPS;
+use crate::OBJECTS;
 use bevy::{gltf::GltfMesh, prelude::*};
 use bevy_rapier3d::prelude::*;
 
@@ -35,7 +35,7 @@ pub fn handle_mesh_changes(
                             &ComputedColliderShape::TriMesh,
                         )
                         .unwrap(),
-                        CollisionGroups::new(PROPS, Group::ALL),
+                        CollisionGroups::new(OBJECTS, Group::ALL),
                     ));
                 }
             });

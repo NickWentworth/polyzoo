@@ -1,6 +1,7 @@
-use super::{formatted_currency, tabs::TabButton, theme::UiTheme, BlockCameraRaycast};
+use super::{formatted_currency, tabs::TabButton, theme::UiTheme, BlockCameraRaycast, UiDisplay};
 use crate::{
-    props::{Object, Prop, SetPreviewProp, UnsetPreviewProp},
+    objects::{BarrierData, PropData},
+    placement::{ChangePreview, PreviewData},
     zoo::{OnZooBalanceChanged, Zoo},
 };
 use bevy::prelude::*;
@@ -10,10 +11,10 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct ZooBalanceText;
 
-/// Component for a buy button to store the contained object
+/// Component for a buy button that stores the event to send when clicked
 #[derive(Component)]
-pub struct BuyButton<P: Prop> {
-    handle: Handle<P>,
+pub struct BuyButton {
+    on_click_event: ChangePreview,
 }
 
 /// Tab enum for different buy menus accessible from the toolbar
@@ -26,8 +27,8 @@ pub(super) enum BuyMenu {
 
 pub(super) fn setup_toolbar(
     mut commands: Commands,
-    objects: Res<Assets<Object>>,
-    // barriers: Res<Assets<Barrier>>,
+    barriers: Res<Assets<BarrierData>>,
+    props: Res<Assets<PropData>>,
     zoo: Res<Zoo>,
     theme: Res<UiTheme>,
 ) {
@@ -68,10 +69,9 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Build))
                 .with_children(|parent| {
-                    // TODO - add barriers back in
-                    // for (handle_id, object) in barriers.iter() {
-                    //     buy_button(object, objects.get_handle(handle_id), parent, &theme);
-                    // }
+                    for (handle_id, barrier) in barriers.iter() {
+                        buy_button(barrier, barriers.get_handle(handle_id), parent, &theme);
+                    }
                 });
 
             // animal menu
@@ -84,14 +84,14 @@ pub(super) fn setup_toolbar(
             // nature menu
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Nature))
-                .with_children(|parent| {
+                .with_children(|parent: &mut ChildBuilder<'_, '_, '_>| {
                     // TODO - nature should probably be sorted by biome when its added
-                    // sort objects by name
-                    let mut sorted_objects = objects.iter().collect::<Vec<_>>();
-                    sorted_objects.sort_by_key(|(_, object)| object.name());
+                    // sort props by name
+                    let mut sorted_props = props.iter().collect::<Vec<_>>();
+                    sorted_props.sort_by_key(|(_, prop)| prop.name());
 
-                    for (handle_id, object) in sorted_objects.into_iter() {
-                        buy_button(object, objects.get_handle(handle_id), parent, &theme);
+                    for (handle_id, prop) in sorted_props.into_iter() {
+                        buy_button(prop, props.get_handle(handle_id), parent, &theme);
                     }
                 });
 
@@ -180,10 +180,10 @@ pub(super) fn setup_toolbar(
         });
 }
 
-/// Spawns in a buy button built for a given object
-fn buy_button<P: Prop>(
-    prop: &P,
-    handle: Handle<P>,
+/// Spawns in a buy button built for a given `UiDisplay`-able object with corresponding `PreviewData`
+fn buy_button(
+    displayable: &impl UiDisplay,
+    preview_data: impl PreviewData,
     parent: &mut ChildBuilder,
     theme: &UiTheme,
 ) -> Entity {
@@ -200,12 +200,16 @@ fn buy_button<P: Prop>(
                 align_items: AlignItems::Center,
                 ..default()
             },
-            BuyButton { handle },
+            BuyButton {
+                on_click_event: ChangePreview {
+                    to: Box::new(preview_data),
+                },
+            },
         ))
         .with_children(|parent| {
-            // barrier image
+            // placeable object's image
             parent.spawn(ImageBundle {
-                image: prop.icon().clone().into(),
+                image: displayable.image(),
                 style: Style {
                     width: Px(80.0),
                     height: Px(80.0),
@@ -214,27 +218,22 @@ fn buy_button<P: Prop>(
                 ..default()
             });
 
-            // barrier cost
-            parent.spawn(theme.dark_text(&formatted_currency(prop.cost()), 16.0));
+            // placeable object's text
+            parent.spawn(theme.dark_text(&displayable.text(), 16.0));
 
-            // TEMP - name and other info can be displayed in a side panel, image and cost is enough for the button
-            parent.spawn(theme.dark_text(prop.name(), 16.0));
+            // TEMP - name and other info can be displayed in a side panel, image and text is enough for the button
+            parent.spawn(theme.dark_text(&displayable.name(), 16.0));
         })
         .id()
 }
 
-pub fn toolbar_interactions<P: Prop>(
-    buy_buttons: Query<(&Interaction, &BuyButton<P>), Changed<Interaction>>,
-    mut set_preview: EventWriter<SetPreviewProp<P>>,
-    mut unset_preview: EventWriter<UnsetPreviewProp>,
+pub fn toolbar_interactions(
+    buy_buttons: Query<(&Interaction, &BuyButton), Changed<Interaction>>,
+    mut change_preview: EventWriter<ChangePreview>,
 ) {
     for (interaction, button) in buy_buttons.iter() {
         if *interaction == Interaction::Pressed {
-            // TODO - add a system param for "ChangePreview<P>" that unsets then sets
-            unset_preview.send(UnsetPreviewProp);
-            set_preview.send(SetPreviewProp {
-                handle: button.handle.clone(),
-            });
+            change_preview.send(button.on_click_event.clone());
         }
     }
 }

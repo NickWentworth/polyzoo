@@ -1,8 +1,7 @@
-use crate::{props::Prop, Currency};
+use crate::Currency;
 use bevy::{ecs::system::SystemParam, prelude::*};
-use std::marker::PhantomData;
 
-mod misc;
+// mod misc;
 // mod selection_panel;
 mod tabs;
 mod theme;
@@ -17,36 +16,23 @@ impl Plugin for UiPlugin {
             .add_systems(Update, theme::handle_interactions)
             // toolbar systems
             .add_systems(Startup, toolbar::setup_toolbar)
+            .add_systems(Update, toolbar::toolbar_interactions)
             .add_systems(Update, toolbar::toolbar_callbacks)
-            .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>)
+            .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>);
             // object selection systems
             // .add_systems(Update, selection_panel::on_object_selection)
             // .add_systems(Update, selection_panel::selection_panel_interactions)
             // misc systems
-            .add_systems(Startup, misc::setup_deselect_prompt)
-            .add_systems(Update, misc::deselect_prompt_interactions);
+            // .add_systems(Startup, misc::setup_deselect_prompt)
+            // .add_systems(Update, misc::deselect_prompt_interactions);
     }
 }
 
-/// External plugin for props to work with the UI
-pub struct PropUiPlugin<P: Prop>(PhantomData<P>);
-
-impl<P: Prop> Default for PropUiPlugin<P> {
-    fn default() -> Self {
-        Self(PhantomData::default())
-    }
-}
-
-impl<P: Prop> Plugin for PropUiPlugin<P> {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                toolbar::toolbar_interactions::<P>,
-                misc::deselect_prompt_callbacks::<P>,
-            ),
-        );
-    }
+/// Allows a type to be displayed within the ui
+pub trait UiDisplay {
+    fn name(&self) -> String;
+    fn image(&self) -> UiImage;
+    fn text(&self) -> String;
 }
 
 /// Marker component for ui that should block raycasts from the camera
