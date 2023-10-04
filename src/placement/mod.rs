@@ -1,5 +1,6 @@
 use crate::camera::CursorRaycast;
 use bevy::prelude::*;
+use std::sync::Arc;
 
 mod barrier_placement;
 mod prop_placement;
@@ -30,9 +31,6 @@ impl Plugin for PlacementPlugin {
 pub trait PreviewData: Send + Sync + 'static {
     /// Spawn in a preview of the object and return a vector of preview entities created
     fn spawn_preview(&self, commands: &mut Commands) -> Vec<Entity>;
-
-    /// Same behavior as Clone trait
-    fn clone_data(&self) -> Box<dyn PreviewData>;
 }
 
 /// Resource to keep track of the current preview entities
@@ -51,17 +49,10 @@ impl PlacementManager {
 }
 
 /// Request event to change the currently shown preview
-#[derive(Event)]
+#[derive(Event, Clone)]
 pub struct ChangePreview {
-    pub to: Box<dyn PreviewData>,
-}
-
-impl Clone for ChangePreview {
-    fn clone(&self) -> Self {
-        Self {
-            to: self.to.clone_data(),
-        }
-    }
+    pub to: Arc<dyn PreviewData>,
+    pub name: String,
 }
 
 /// Request event to clear the currently shown preview

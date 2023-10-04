@@ -5,6 +5,7 @@ use crate::{
     zoo::{OnZooBalanceChanged, Zoo},
 };
 use bevy::prelude::*;
+use std::sync::Arc;
 
 // TODO - add information panel to buy menu
 
@@ -202,7 +203,8 @@ fn buy_button(
             },
             BuyButton {
                 on_click_event: ChangePreview {
-                    to: Box::new(preview_data),
+                    to: Arc::new(preview_data),
+                    name: displayable.name(),
                 },
             },
         ))

@@ -20,10 +20,6 @@ impl PreviewData for Handle<PropData> {
     fn spawn_preview(&self, commands: &mut Commands) -> Vec<Entity> {
         vec![commands.spawn_prop_preview(self.clone())]
     }
-
-    fn clone_data(&self) -> Box<dyn PreviewData> {
-        Box::new(self.clone())
-    }
 }
 
 trait PropCommandsExtension {

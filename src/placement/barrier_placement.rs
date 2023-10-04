@@ -21,10 +21,6 @@ impl PreviewData for Handle<BarrierData> {
     fn spawn_preview(&self, commands: &mut Commands) -> Vec<Entity> {
         commands.spawn_barrier_preview(self).into()
     }
-
-    fn clone_data(&self) -> Box<dyn PreviewData> {
-        Box::new(self.clone())
-    }
 }
 
 trait BarrierCommandsExtension {
