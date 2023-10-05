@@ -1,4 +1,7 @@
-use super::{PlacePreview, PreviewData};
+use super::{
+    utility::{RenderGltf, RenderGltfMode},
+    PlacePreview, PreviewData,
+};
 use crate::{camera::CursorRaycast, objects::PropData};
 use bevy::prelude::*;
 
@@ -41,7 +44,10 @@ impl PropCommandsExtension for Commands<'_, '_> {
                 world.entity_mut(id).insert((
                     SpatialBundle::default(),
                     PropPreview { data: prop_handle },
-                    mesh,
+                    RenderGltf {
+                        handle: mesh,
+                        mode: RenderGltfMode::Preview,
+                    },
                 ));
             })
             .id()
@@ -89,7 +95,10 @@ fn on_preview_place(
             Prop {
                 data: preview.data.clone(),
             },
-            prop_data.mesh.clone(),
+            RenderGltf {
+                handle: prop_data.mesh.clone(),
+                mode: RenderGltfMode::Regular,
+            },
         ));
     }
 }

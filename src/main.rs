@@ -12,7 +12,10 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             RapierPhysicsPlugin::<NoUserData>::default(),
-            RapierDebugRenderPlugin::default(),
+            RapierDebugRenderPlugin {
+                enabled: false,
+                ..default()
+            },
         ))
         .add_plugins((
             camera::ControllableCameraPlugin,

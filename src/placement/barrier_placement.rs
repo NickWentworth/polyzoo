@@ -1,4 +1,7 @@
-use super::PreviewData;
+use super::{
+    utility::{RenderGltf, RenderGltfMode},
+    PreviewData,
+};
 use crate::{camera::CursorRaycast, objects::BarrierData};
 use bevy::prelude::*;
 
@@ -47,7 +50,10 @@ impl BarrierCommandsExtension for Commands<'_, '_> {
                     PostPreview {
                         data: barrier_handle_post,
                     },
-                    post_mesh,
+                    RenderGltf {
+                        handle: post_mesh,
+                        mode: RenderGltfMode::Preview,
+                    },
                 ));
             })
             .id();
@@ -70,7 +76,10 @@ impl BarrierCommandsExtension for Commands<'_, '_> {
                     FencePreview {
                         data: barrier_handle_fence,
                     },
-                    fence_mesh,
+                    RenderGltf {
+                        handle: fence_mesh,
+                        mode: RenderGltfMode::Preview,
+                    },
                 ));
             })
             .id();
