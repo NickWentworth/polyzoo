@@ -1,11 +1,31 @@
-use super::{formatted_currency, tabs::TabButton, theme::UiTheme, BlockCameraRaycast, UiDisplay};
+use super::{
+    formatted_currency,
+    tabs::{tab_group, HideTabButton, ShowTabButton},
+    theme::{ButtonColor, UiTheme},
+    BlockCameraRaycast, UiDisplay,
+};
 use crate::{
     objects::{BarrierData, PropData},
-    placement::{ChangePreview, PreviewData},
+    placement::{ChangePreview, ClearPreview, PreviewData},
     zoo::{OnZooBalanceChanged, Zoo},
 };
 use bevy::prelude::*;
 use std::sync::Arc;
+
+pub struct ToolbarPlugin;
+impl Plugin for ToolbarPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup_toolbar).add_systems(
+            Update,
+            (
+                tab_group::<BuyMenu>,
+                on_buy_button_press,
+                on_preview_change,
+                on_zoo_balance_changed,
+            ),
+        );
+    }
+}
 
 // TODO - add information panel to buy menu
 
@@ -139,25 +159,40 @@ pub(super) fn setup_toolbar(
                         })
                         .with_children(|parent| {
                             parent
-                                .spawn((theme.dark_button(), TabButton(Some(BuyMenu::Build))))
+                                .spawn((
+                                    theme.dark_button(),
+                                    ShowTabButton {
+                                        tab: BuyMenu::Build,
+                                    },
+                                ))
                                 .with_children(|parent| {
                                     parent.spawn(theme.white_text("Build", 18.0));
                                 });
 
                             parent
-                                .spawn((theme.dark_button(), TabButton(Some(BuyMenu::Animal))))
+                                .spawn((
+                                    theme.dark_button(),
+                                    ShowTabButton {
+                                        tab: BuyMenu::Animal,
+                                    },
+                                ))
                                 .with_children(|parent| {
                                     parent.spawn(theme.white_text("Animals", 18.0));
                                 });
 
                             parent
-                                .spawn((theme.dark_button(), TabButton(Some(BuyMenu::Nature))))
+                                .spawn((
+                                    theme.dark_button(),
+                                    ShowTabButton {
+                                        tab: BuyMenu::Nature,
+                                    },
+                                ))
                                 .with_children(|parent| {
                                     parent.spawn(theme.white_text("Nature", 18.0));
                                 });
 
                             parent
-                                .spawn((theme.dark_button(), TabButton::<BuyMenu>(None)))
+                                .spawn((theme.dark_button(), HideTabButton::<BuyMenu>::default()))
                                 .with_children(|parent| {
                                     parent.spawn(theme.white_text("X", 18.0));
                                 });
@@ -229,7 +264,7 @@ fn buy_button(
         .id()
 }
 
-pub fn toolbar_interactions(
+pub fn on_buy_button_press(
     buy_buttons: Query<(&Interaction, &BuyButton), Changed<Interaction>>,
     mut change_preview: EventWriter<ChangePreview>,
 ) {
@@ -240,7 +275,33 @@ pub fn toolbar_interactions(
     }
 }
 
-pub fn toolbar_callbacks(
+pub fn on_preview_change(
+    theme: Res<UiTheme>,
+    mut clears: EventReader<ClearPreview>,
+    mut changes: EventReader<ChangePreview>,
+    mut buy_buttons: Query<(&BuyButton, &mut ButtonColor)>,
+) {
+    for _ in clears.iter() {
+        for (_, mut button_color) in buy_buttons.iter_mut() {
+            // revert to default button color if clearing a preview
+            button_color.revert();
+        }
+    }
+
+    for change in changes.iter() {
+        for (button, mut button_color) in buy_buttons.iter_mut() {
+            // detect if the button was pressed based on if the object's name is the same as the button's stored change event
+            // if objects have the same name, this will incorrectly set multiple buy buttons as previewing
+            if change.name == button.on_click_event.name {
+                button_color.update(theme.accent);
+            } else {
+                button_color.revert();
+            }
+        }
+    }
+}
+
+pub fn on_zoo_balance_changed(
     mut on_balance_changed: EventReader<OnZooBalanceChanged>,
     mut zoo_balance_text: Query<&mut Text, With<ZooBalanceText>>,
 ) {

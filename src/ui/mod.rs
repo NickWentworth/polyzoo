@@ -10,15 +10,7 @@ mod toolbar;
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app
-            // theme systems
-            .init_resource::<theme::UiTheme>()
-            .add_systems(Update, theme::handle_interactions)
-            // toolbar systems
-            .add_systems(Startup, toolbar::setup_toolbar)
-            .add_systems(Update, toolbar::toolbar_interactions)
-            .add_systems(Update, toolbar::toolbar_callbacks)
-            .add_systems(Update, tabs::tab_group::<toolbar::BuyMenu>)
+        app.add_plugins((theme::UiThemePlugin, toolbar::ToolbarPlugin))
             // object selection systems
             // .add_systems(Update, selection_panel::on_object_selection)
             // .add_systems(Update, selection_panel::selection_panel_interactions)

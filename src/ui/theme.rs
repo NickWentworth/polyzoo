@@ -1,10 +1,39 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-pub struct DarkButton;
+pub struct UiThemePlugin;
+impl Plugin for UiThemePlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<UiTheme>()
+            .add_systems(Update, handle_button_color_change);
+    }
+}
 
+/// Component allowing a button to override or fall back to its default color
 #[derive(Component)]
-pub struct LightButton;
+pub struct ButtonColor {
+    default_color: Color,
+    override_color: Option<Color>,
+}
+
+impl ButtonColor {
+    /// Create a new button color component with given default color
+    fn new(default_color: Color) -> Self {
+        Self {
+            default_color,
+            override_color: None,
+        }
+    }
+
+    /// Update the color of the button to the given color
+    pub fn update(&mut self, color: Color) {
+        self.override_color = Some(color);
+    }
+
+    /// Revert the button's color back to its default
+    pub fn revert(&mut self) {
+        self.override_color = None;
+    }
+}
 
 /// Group of colors that are used for styling the ui
 #[derive(Resource)]
@@ -47,10 +76,9 @@ impl UiTheme {
                     padding: UiRect::all(Val::Px(4.0)),
                     ..default()
                 },
-                background_color: self.dark.into(),
                 ..default()
             },
-            DarkButton,
+            ButtonColor::new(self.dark),
         )
     }
 
@@ -64,10 +92,9 @@ impl UiTheme {
                     padding: UiRect::all(Val::Px(4.0)),
                     ..default()
                 },
-                background_color: self.light.into(),
                 ..default()
             },
-            LightButton,
+            ButtonColor::new(self.light),
         )
     }
 
@@ -124,30 +151,27 @@ impl UiTheme {
     }
 }
 
-/// All systems needed for component interactivity
-pub fn handle_interactions(
-    mut interactions: ParamSet<(
-        // dark buttons
-        Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<DarkButton>)>,
-        // light buttons
-        Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<LightButton>)>,
-    )>,
-    theme: Res<UiTheme>,
+fn handle_button_color_change(
+    mut buttons: Query<
+        (&mut BackgroundColor, &Interaction, &ButtonColor),
+        Or<(Changed<Interaction>, Changed<ButtonColor>)>,
+    >,
 ) {
-    for (interaction, mut background_color) in interactions.p0().iter_mut() {
-        *background_color = match interaction {
-            Interaction::None => theme.dark,
-            Interaction::Hovered => theme.dark * 0.9,
-            Interaction::Pressed => theme.dark * 0.7,
-        }
-        .into();
-    }
+    for (mut background_color, interaction, button_color) in buttons.iter_mut() {
+        // if an override color exists, use that
+        let base_color = button_color
+            .override_color
+            .unwrap_or(button_color.default_color);
 
-    for (interaction, mut background_color) in interactions.p1().iter_mut() {
         *background_color = match interaction {
-            Interaction::None => theme.light,
-            Interaction::Hovered => theme.light * 0.9,
-            Interaction::Pressed => theme.light * 0.7,
+            // base color regularly
+            Interaction::None => base_color,
+
+            // slightly darker on hover
+            Interaction::Hovered => base_color * 0.9,
+
+            // even darker on press
+            Interaction::Pressed => base_color * 0.7,
         }
         .into();
     }
