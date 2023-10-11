@@ -1,23 +1,18 @@
 use crate::Currency;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-mod misc;
+mod components;
 // mod selection_panel;
 mod tabs;
 mod theme;
-mod toolbar;
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((theme::UiThemePlugin, toolbar::ToolbarPlugin))
-            // object selection systems
-            // .add_systems(Update, selection_panel::on_object_selection)
-            // .add_systems(Update, selection_panel::selection_panel_interactions)
-            // misc systems
-            .add_systems(Startup, misc::setup_clear_preview_prompt)
-            .add_systems(Update, misc::clear_preview_prompt_interactions)
-            .add_systems(Update, misc::clear_preview_prompt_callbacks);
+        app.add_plugins((
+            theme::UiThemePlugin,
+            components::UiComponentsPlugin,
+        ));
     }
 }
 
@@ -57,10 +52,4 @@ impl<'w, 's> UiQuery<'w, 's> {
 
         false
     }
-}
-
-// TODO - add commas between thousands, millions, etc.
-/// Nicely formats the currency for display
-fn formatted_currency(amount: Currency) -> String {
-    format!("${:.0}", amount)
 }

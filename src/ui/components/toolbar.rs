@@ -1,5 +1,4 @@
 use super::{
-    formatted_currency,
     tabs::{tab_group, HideTabButton, ShowTabButton},
     theme::{ButtonColor, UiTheme},
     BlockCameraRaycast, UiDisplay,
@@ -140,7 +139,7 @@ pub(super) fn setup_toolbar(
                         })
                         .with_children(|parent| {
                             parent.spawn((
-                                theme.white_text(&formatted_currency(zoo.balance()), 18.0),
+                                theme.white_text(&format!("${:.0}", zoo.balance()), 18.0),
                                 ZooBalanceText,
                             ));
                         });
@@ -307,6 +306,6 @@ pub fn on_zoo_balance_changed(
 ) {
     for balance_changed in on_balance_changed.iter() {
         let mut text = zoo_balance_text.single_mut();
-        text.sections[0].value = formatted_currency(balance_changed.balance);
+        text.sections[0].value = format!("${:.0}", balance_changed.balance);
     }
 }

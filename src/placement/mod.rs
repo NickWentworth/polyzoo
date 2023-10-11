@@ -16,7 +16,7 @@ impl Plugin for PlacementPlugin {
         .add_event::<ChangePreview>()
         .add_event::<ClearPreview>()
         .add_event::<PlacePreview>()
-        .add_systems(Update, (on_preview_change, on_click))
+        .add_systems(Update, (on_preview_change, on_escape_press, on_click))
         .add_systems(Update, utility::handle_mesh_changes);
     }
 }
@@ -72,6 +72,13 @@ fn on_preview_change(
         }
 
         change.to.spawn_preview(&mut commands);
+    }
+}
+
+/// Clears the preview when the escape key is pressed
+pub fn on_escape_press(keys: Res<Input<KeyCode>>, mut clears: EventWriter<ClearPreview>) {
+    if keys.just_pressed(KeyCode::Escape) {
+        clears.send(ClearPreview);
     }
 }
 
