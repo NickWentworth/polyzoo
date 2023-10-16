@@ -1,4 +1,4 @@
-use crate::{ui::UiDisplay, Currency};
+use crate::{ui::UiDisplay, Currency, CurrencyFormat};
 use bevy::{
     gltf::GltfMesh,
     prelude::*,
@@ -37,7 +37,11 @@ impl UiDisplay for BarrierData {
     }
 
     fn text(&self) -> String {
-        format!("${:.0} (${:.0}/m)", self.post_cost, self.fence_cost)
+        format!(
+            "{} ({}/m)",
+            self.post_cost.comma_separated(),
+            self.fence_cost.comma_separated()
+        )
     }
 }
 

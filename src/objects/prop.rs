@@ -1,4 +1,4 @@
-use crate::{ui::UiDisplay, Currency};
+use crate::{ui::UiDisplay, Currency, CurrencyFormat};
 use bevy::{
     gltf::GltfMesh,
     prelude::*,
@@ -32,7 +32,7 @@ impl UiDisplay for PropData {
     }
 
     fn text(&self) -> String {
-        format!("${:.0}", self.cost)
+        self.cost.comma_separated()
     }
 }
 

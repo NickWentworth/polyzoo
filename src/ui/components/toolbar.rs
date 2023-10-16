@@ -7,6 +7,7 @@ use crate::{
     objects::{BarrierData, PropData},
     placement::{ChangePreview, ClearPreview, PreviewData},
     zoo::{OnZooBalanceChanged, Zoo},
+    CurrencyFormat,
 };
 use bevy::prelude::*;
 use std::sync::Arc;
@@ -139,7 +140,7 @@ pub(super) fn setup_toolbar(
                         })
                         .with_children(|parent| {
                             parent.spawn((
-                                theme.white_text(&format!("${:.0}", zoo.balance()), 18.0),
+                                theme.white_text(&zoo.balance().comma_separated(), 18.0),
                                 ZooBalanceText,
                             ));
                         });
@@ -306,6 +307,6 @@ pub fn on_zoo_balance_changed(
 ) {
     for balance_changed in on_balance_changed.iter() {
         let mut text = zoo_balance_text.single_mut();
-        text.sections[0].value = format!("${:.0}", balance_changed.balance);
+        text.sections[0].value = balance_changed.balance.comma_separated();
     }
 }

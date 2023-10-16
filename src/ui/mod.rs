@@ -1,4 +1,3 @@
-use crate::Currency;
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 mod components;
@@ -9,10 +8,7 @@ mod theme;
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            theme::UiThemePlugin,
-            components::UiComponentsPlugin,
-        ));
+        app.add_plugins((theme::UiThemePlugin, components::UiComponentsPlugin));
     }
 }
 

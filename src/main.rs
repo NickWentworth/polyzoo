@@ -31,6 +31,35 @@ fn main() {
 /// Common currency type used throughout the game
 type Currency = f32;
 
+trait CurrencyFormat {
+    /// Format currency with commas separating every 3 digits, such as $12,345,678
+    fn comma_separated(self) -> String;
+}
+
+impl CurrencyFormat for Currency {
+    fn comma_separated(self) -> String {
+        let string_repr = format!("{:.0}", self);
+
+        // add commas between every 3 digits
+        let with_commas = string_repr
+            .chars()
+            // break into chunks of 3, starting from end of iterator
+            .collect::<Vec<_>>()
+            .rchunks(3)
+            // then reverse again to the proper order
+            .rev()
+            .collect::<Vec<_>>()
+            // join char slices with a comma
+            .join(&',')
+            // and collect back into a String
+            .iter()
+            .collect::<String>();
+
+        // add dollar sign
+        format!("${}", with_commas)
+    }
+}
+
 // collision groups
 const GROUND: Group = Group::GROUP_1;
 const OBJECTS: Group = Group::GROUP_2;
