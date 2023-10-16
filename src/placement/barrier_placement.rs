@@ -30,7 +30,6 @@ fn mark_fence_movement(
         for fence_entity in moved_post.fences.iter() {
             if let Ok(mut fence) = fences.get_mut(*fence_entity) {
                 fence.set_changed();
-                println!("Changing fence: {:?}", fence_entity);
             }
         }
     }
@@ -55,7 +54,9 @@ fn handle_fence_movement(
             translation: midpoint,
             rotation: Quat::from_rotation_y(angle),
             scale: Vec3::new(distance, 1.0, 1.0),
-        }
+        };
+
+        println!("Adjusted fence entity");
     }
 }
 
@@ -117,19 +118,26 @@ impl PreviewData for Handle<BarrierData> {
 /// Handles movement of post preview and visibility of both post and fence previews
 fn handle_preview_movement(
     cursor: CursorRaycast,
-    mut post_preview: Query<
-        (&mut Transform, &mut Visibility),
-        (With<BarrierPost>, With<Preview>, Without<BarrierFence>),
-    >,
-    mut fence_preview: Query<
-        &mut Visibility,
-        (With<BarrierFence>, With<Preview>, Without<BarrierPost>),
-    >,
+    mut previous_position: Local<Option<Vec3>>,
+
+    mut previews: ParamSet<(
+        // post preview
+        Query<(&mut Transform, &mut Visibility), (With<BarrierPost>, With<Preview>)>,
+        // fence preview
+        Query<&mut Visibility, (With<BarrierPost>, With<Preview>)>,
+    )>,
 ) {
     let ground_point = cursor.ground_point();
 
+    // prevents needless mutating of preview transforms if position is the same
+    if ground_point == *previous_position {
+        return;
+    } else {
+        *previous_position = ground_point;
+    }
+
     // update post preview's transform and visibility
-    if let Ok((mut post_transform, mut post_visibility)) = post_preview.get_single_mut() {
+    if let Ok((mut post_transform, mut post_visibility)) = previews.p0().get_single_mut() {
         match ground_point {
             Some(position) => {
                 post_transform.translation = position;
@@ -142,7 +150,7 @@ fn handle_preview_movement(
 
     // only update fence preview's visibility
     // fence systems will handle updating fence movement automatically
-    if let Ok(mut fence_visibility) = fence_preview.get_single_mut() {
+    if let Ok(mut fence_visibility) = previews.p1().get_single_mut() {
         match ground_point {
             Some(_) => *fence_visibility = Visibility::Visible,
             None => *fence_visibility = Visibility::Hidden,
