@@ -1,9 +1,10 @@
 use super::{
-    utility::{RenderGltf, RenderGltfMode},
+    utility::{ColliderMesh, RenderGltf, RenderGltfMode},
     PlacePreview, Preview, PreviewData,
 };
-use crate::{camera::CursorRaycast, objects::BarrierData};
+use crate::{camera::CursorRaycast, objects::BarrierData, OBJECTS};
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 /// Instance of a barrier's post in the world
 #[derive(Component, Clone)]
@@ -55,8 +56,6 @@ fn handle_fence_movement(
             rotation: Quat::from_rotation_y(angle),
             scale: Vec3::new(distance, 1.0, 1.0),
         };
-
-        println!("Adjusted fence entity");
     }
 }
 
@@ -92,10 +91,6 @@ impl PreviewData for Handle<BarrierData> {
             let barriers = world.resource::<Assets<BarrierData>>();
             let barrier_data = barriers.get(&barrier_handle).unwrap();
 
-            // store any required world-related data before inserting
-            let post_mesh = barrier_data.post_mesh.clone();
-            let post_cost = barrier_data.post_cost;
-
             // spawn barrier post preview
             world.spawn((
                 SpatialBundle::default(),
@@ -103,10 +98,17 @@ impl PreviewData for Handle<BarrierData> {
                     data: barrier_handle.clone(),
                     fences: Vec::new(),
                 },
-                Preview { cost: post_cost },
+                Preview {
+                    cost: barrier_data.post_cost,
+                },
                 RenderGltf {
-                    handle: post_mesh,
+                    handle: barrier_data.post_model.clone(),
                     mode: RenderGltfMode::Preview,
+                },
+                ColliderMesh {
+                    mesh: barrier_data.post_collider.clone(),
+                    rb: RigidBody::Fixed,
+                    membership: OBJECTS,
                 },
             ));
 
@@ -197,8 +199,13 @@ fn on_preview_place(
                 fences: vec![placed_fence_entity],
             },
             RenderGltf {
-                handle: barrier_data.post_mesh.clone(),
+                handle: barrier_data.post_model.clone(),
                 mode: RenderGltfMode::Regular,
+            },
+            ColliderMesh {
+                mesh: barrier_data.post_collider.clone(),
+                rb: RigidBody::Fixed,
+                membership: OBJECTS,
             },
         ));
 
@@ -216,8 +223,13 @@ fn on_preview_place(
                         connection: [fence_preview.connection[0], placed_post_entity],
                     },
                     RenderGltf {
-                        handle: barrier_data.fence_mesh.clone(),
+                        handle: barrier_data.fence_model.clone(),
                         mode: RenderGltfMode::Regular,
+                    },
+                    ColliderMesh {
+                        mesh: barrier_data.fence_collider.clone(),
+                        rb: RigidBody::Fixed,
+                        membership: OBJECTS,
                     },
                 ));
 
@@ -237,8 +249,13 @@ fn on_preview_place(
                     },
                     Preview { cost: 0.0 },
                     RenderGltf {
-                        handle: barrier_data.fence_mesh.clone(),
+                        handle: barrier_data.fence_model.clone(),
                         mode: RenderGltfMode::Preview,
+                    },
+                    ColliderMesh {
+                        mesh: barrier_data.fence_collider.clone(),
+                        rb: RigidBody::Fixed,
+                        membership: OBJECTS,
                     },
                 ));
 

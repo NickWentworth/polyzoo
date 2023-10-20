@@ -1,4 +1,3 @@
-use crate::OBJECTS;
 use bevy::{gltf::GltfMesh, pbr::NotShadowCaster, prelude::*};
 use bevy_rapier3d::prelude::*;
 
@@ -28,7 +27,6 @@ impl RenderGltfMode {
 pub fn handle_mesh_changes(
     mut commands: Commands,
     gltf_meshes: Res<Assets<GltfMesh>>,
-    bevy_meshes: Res<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 
     changes: Query<(Entity, &RenderGltf), Changed<RenderGltf>>,
@@ -45,15 +43,20 @@ pub fn handle_mesh_changes(
 
                 // spawn a mesh child for each gltf primitive
                 for gltf_primitive in gltf_mesh.primitives.iter() {
-                    // get material handle based on rendering mode
-                    let material = match gltf.mode {
-                        // regular rendering mode should just insert material handle
-                        RenderGltfMode::Regular => {
-                            gltf_primitive.material.clone().unwrap_or_default()
-                        }
+                    // spawn primitive into the world
+                    let mut model = parent.spawn(PbrBundle {
+                        mesh: gltf_primitive.mesh.clone(),
+                        material: gltf_primitive.material.clone().unwrap_or_default(),
+                        ..default()
+                    });
 
-                        // preview rendering mode should insert material handle with adjusted alpha for transparency
+                    // apply additional options based on rendering mode
+                    match gltf.mode {
+                        // nothing to do for regular rendering mode
+                        RenderGltfMode::Regular => (),
+
                         RenderGltfMode::Preview => {
+                            // replace base material with slightly transparent preview material
                             let base_handle = gltf_primitive.material.clone().unwrap_or_default();
                             let base_material = materials.get(&base_handle).unwrap();
 
@@ -62,36 +65,39 @@ pub fn handle_mesh_changes(
                                 .base_color
                                 .with_a(RenderGltfMode::PREVIEW_ALPHA);
 
-                            materials.add(transparent_color.into())
-                        }
-                    };
+                            // and insert into model to overwrite base material
+                            model.insert(materials.add(transparent_color.into()));
 
-                    // spawn primitive into the world
-                    let mut model = parent.spawn((
-                        PbrBundle {
-                            mesh: gltf_primitive.mesh.clone(),
-                            material,
-                            ..default()
-                        },
-                        Collider::from_bevy_mesh(
-                            &bevy_meshes.get(&gltf_primitive.mesh).unwrap(),
-                            &ComputedColliderShape::TriMesh,
-                        )
-                        .unwrap(),
-                        CollisionGroups::new(OBJECTS, Group::ALL),
-                    ));
-
-                    // apply additional options based on rendering mode
-                    match gltf.mode {
-                        // nothing to do for regular rendering mode
-                        RenderGltfMode::Regular => (),
-
-                        // transparent preview mode should not cast shadows
-                        RenderGltfMode::Preview => {
+                            // transparent preview mode should not cast shadows
                             model.insert(NotShadowCaster);
                         }
                     }
                 }
             });
+    }
+}
+
+#[derive(Component)]
+pub struct ColliderMesh {
+    pub mesh: Handle<Mesh>,
+    pub rb: RigidBody,
+    pub membership: Group,
+}
+
+pub fn handle_collider_changes(
+    mut commands: Commands,
+    meshes: Res<Assets<Mesh>>,
+
+    changes: Query<(Entity, &ColliderMesh), Changed<ColliderMesh>>,
+) {
+    for (entity, collider_component) in changes.iter() {
+        let Some(collider_mesh) = meshes.get(&collider_component.mesh) else { continue };
+        let Some(collider) = Collider::from_bevy_mesh(collider_mesh, &ComputedColliderShape::ConvexHull) else { continue };
+
+        commands.entity(entity).insert((
+            collider_component.rb,
+            collider,
+            CollisionGroups::new(collider_component.membership, Group::ALL),
+        ));
     }
 }

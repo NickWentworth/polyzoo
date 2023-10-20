@@ -20,11 +20,13 @@ pub struct BarrierData {
     pub icon: Handle<Image>,
 
     pub post_cost: Currency,
-    pub post_mesh: Handle<GltfMesh>,
+    pub post_model: Handle<GltfMesh>,
+    pub post_collider: Handle<Mesh>,
 
     /// Per-meter cost of fence
     pub fence_cost: Currency,
-    pub fence_mesh: Handle<GltfMesh>,
+    pub fence_model: Handle<GltfMesh>,
+    pub fence_collider: Handle<Mesh>,
 }
 
 impl UiDisplay for BarrierData {
@@ -58,9 +60,11 @@ impl FromWorld for BarrierLoader {
             name: "Concrete Barrier".into(),
             icon: asset_server.load("test.png"),
             post_cost: 50.0,
-            post_mesh: asset_server.load("barriers/concrete_post.glb#Mesh0"),
+            post_model: asset_server.load("barriers/concrete_post.glb#Mesh0"),
+            post_collider: asset_server.load("barriers/concrete_post.glb#Mesh0/Primitive0"),
             fence_cost: 10.0,
-            fence_mesh: asset_server.load("barriers/concrete_fence.glb#Mesh0"),
+            fence_model: asset_server.load("barriers/concrete_fence.glb#Mesh0"),
+            fence_collider: asset_server.load("barriers/concrete_fence.glb#Mesh0/Primitive0"),
         }];
 
         let mut barrier_assets = world.resource_mut::<Assets<BarrierData>>();

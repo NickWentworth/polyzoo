@@ -19,7 +19,10 @@ pub struct PropData {
     pub icon: Handle<Image>,
 
     pub cost: Currency,
-    pub mesh: Handle<GltfMesh>,
+    /// The model that will be rendered for this prop
+    pub model: Handle<GltfMesh>,
+    /// The single collider mesh for this prop
+    pub collider: Handle<Mesh>,
 }
 
 impl UiDisplay for PropData {
@@ -50,55 +53,64 @@ impl FromWorld for PropLoader {
                 name: "Dark Rock 1".into(),
                 icon: asset_server.load("test.png"),
                 cost: 20.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh0"),
+                model: asset_server.load("nature/rocks.glb#Mesh0"),
+                collider: asset_server.load("nature/rocks.glb#Mesh0/Primitive0"),
             },
             PropData {
                 name: "Dark Rock 2".into(),
                 icon: asset_server.load("test.png"),
                 cost: 25.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh1"),
+                model: asset_server.load("nature/rocks.glb#Mesh1"),
+                collider: asset_server.load("nature/rocks.glb#Mesh1/Primitive0"),
             },
             PropData {
                 name: "Dark Rock 3".into(),
                 icon: asset_server.load("test.png"),
                 cost: 30.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh2"),
+                model: asset_server.load("nature/rocks.glb#Mesh2"),
+                collider: asset_server.load("nature/rocks.glb#Mesh2/Primitive0"),
             },
             PropData {
                 name: "Light Rock 1".into(),
                 icon: asset_server.load("test.png"),
                 cost: 20.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh3"),
+                model: asset_server.load("nature/rocks.glb#Mesh3"),
+                collider: asset_server.load("nature/rocks.glb#Mesh3/Primitive0"),
             },
             PropData {
                 name: "Light Rock 2".into(),
                 icon: asset_server.load("test.png"),
                 cost: 25.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh4"),
+                model: asset_server.load("nature/rocks.glb#Mesh4"),
+                collider: asset_server.load("nature/rocks.glb#Mesh4/Primitive0"),
             },
             PropData {
                 name: "Light Rock 3".into(),
                 icon: asset_server.load("test.png"),
                 cost: 30.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh5"),
+                model: asset_server.load("nature/rocks.glb#Mesh5"),
+                collider: asset_server.load("nature/rocks.glb#Mesh5/Primitive0"),
             },
             PropData {
                 name: "Sandy Rock 1".into(),
                 icon: asset_server.load("test.png"),
                 cost: 20.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh6"),
+                model: asset_server.load("nature/rocks.glb#Mesh6"),
+                collider: asset_server.load("nature/rocks.glb#Mesh6/Primitive0"),
             },
             PropData {
                 name: "Sandy Rock 2".into(),
                 icon: asset_server.load("test.png"),
                 cost: 25.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh7"),
+                model: asset_server.load("nature/rocks.glb#Mesh7"),
+                collider: asset_server.load("nature/rocks.glb#Mesh7/Primitive0"),
             },
             PropData {
                 name: "Sandy Rock 3".into(),
                 icon: asset_server.load("test.png"),
                 cost: 30.0,
-                mesh: asset_server.load("nature/rocks.glb#Mesh8"),
+                model: asset_server.load("nature/rocks.glb#Mesh8"),
+                collider: asset_server.load("nature/rocks.glb#Mesh8/Primitive0"),
             },
         ];
 

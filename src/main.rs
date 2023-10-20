@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use placement::utility::ColliderMesh;
 
 mod camera;
 mod objects;
@@ -80,14 +81,17 @@ fn setup_demo_scene(
     });
 
     // ground plane
-    let ground_plane = Mesh::from(shape::Plane::from_size(10.0));
+    let ground_mesh = meshes.add(Mesh::from(shape::Plane::from_size(10.0)));
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(ground_plane.clone()),
+            mesh: ground_mesh.clone(),
             material: materials.add(Color::DARK_GREEN.into()),
             ..default()
         },
-        Collider::from_bevy_mesh(&ground_plane, &ComputedColliderShape::ConvexHull).unwrap(),
-        CollisionGroups::new(GROUND, Group::ALL),
+        ColliderMesh {
+            mesh: ground_mesh,
+            rb: RigidBody::Fixed,
+            membership: GROUND,
+        },
     ));
 }

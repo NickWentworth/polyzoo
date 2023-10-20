@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 mod barrier_placement;
 mod prop_placement;
-mod utility;
+pub mod utility;
 
 pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
@@ -17,7 +17,13 @@ impl Plugin for PlacementPlugin {
         .add_event::<ClearPreview>()
         .add_event::<PlacePreview>()
         .add_systems(Update, (on_preview_change, on_escape_press, on_click))
-        .add_systems(Update, utility::handle_mesh_changes);
+        .add_systems(
+            Update,
+            (
+                utility::handle_mesh_changes,
+                utility::handle_collider_changes,
+            ),
+        );
     }
 }
 

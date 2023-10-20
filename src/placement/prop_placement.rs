@@ -1,9 +1,10 @@
 use super::{
-    utility::{RenderGltf, RenderGltfMode},
+    utility::{ColliderMesh, RenderGltf, RenderGltfMode},
     PlacePreview, Preview, PreviewData,
 };
-use crate::{camera::CursorRaycast, objects::PropData};
+use crate::{camera::CursorRaycast, objects::PropData, OBJECTS};
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 // TODO - this should probably go elsewhere
 /// Instance of a prop in the world
@@ -28,18 +29,21 @@ impl PreviewData for Handle<PropData> {
             let props = world.resource::<Assets<PropData>>();
             let prop_data = props.get(&prop_handle).unwrap();
 
-            // store any required world-related data before inserting
-            let mesh = prop_data.mesh.clone();
-            let cost = prop_data.cost;
-
             // spawn prop preview
             world.spawn((
                 SpatialBundle::default(),
                 Prop { data: prop_handle },
-                Preview { cost },
+                Preview {
+                    cost: prop_data.cost,
+                },
                 RenderGltf {
-                    handle: mesh,
+                    handle: prop_data.model.clone(),
                     mode: RenderGltfMode::Preview,
+                },
+                ColliderMesh {
+                    mesh: prop_data.collider.clone(),
+                    rb: RigidBody::Fixed,
+                    membership: OBJECTS,
                 },
             ));
         });
@@ -82,8 +86,13 @@ fn on_preview_place(
                 data: preview.data.clone(),
             },
             RenderGltf {
-                handle: prop_data.mesh.clone(),
+                handle: prop_data.model.clone(),
                 mode: RenderGltfMode::Regular,
+            },
+            ColliderMesh {
+                mesh: prop_data.collider.clone(),
+                rb: RigidBody::Fixed,
+                membership: OBJECTS,
             },
         ));
     }
