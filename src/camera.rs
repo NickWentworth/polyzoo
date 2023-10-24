@@ -1,4 +1,4 @@
-use crate::{ui::UiQuery, GROUND};
+use crate::{placement::utility::CollisionLayer, ui::UiQuery};
 use bevy::{
     ecs::system::SystemParam,
     input::mouse::{MouseMotion, MouseWheel},
@@ -149,12 +149,18 @@ impl<'w, 's> CursorRaycast<'w, 's> {
 
     /// Return the point on the ground plane that the mouse is over
     pub fn ground_point(&self) -> Option<Vec3> {
-        let ground_filter = QueryFilter::default().groups(CollisionGroups::new(GROUND, GROUND));
+        let ground_filter = QueryFilter::default().groups(CollisionGroups::new(
+            CollisionLayer::Ground.into(),
+            CollisionLayer::Ground.into(),
+        ));
+
         self.raycast(ground_filter).map(|hit| hit.1)
     }
 
     /// Return the nearest entity clicked on by the cursor
     pub fn first_entity(&self) -> Option<Entity> {
-        self.raycast(QueryFilter::default()).map(|hit| hit.0)
+        let filter = QueryFilter::default().groups(CollisionGroups::new(Group::ALL, Group::ALL));
+
+        self.raycast(filter).map(|hit| hit.0)
     }
 }

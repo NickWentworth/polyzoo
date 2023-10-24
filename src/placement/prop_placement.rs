@@ -1,8 +1,8 @@
 use super::{
-    utility::{ColliderMesh, RenderGltf, RenderGltfMode},
+    utility::{ColliderMesh, CollisionLayer, RenderGltf, RenderGltfMode},
     PlacePreview, Preview, PreviewData,
 };
-use crate::{camera::CursorRaycast, objects::PropData, OBJECTS};
+use crate::{camera::CursorRaycast, objects::PropData};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -43,7 +43,7 @@ impl PreviewData for Handle<PropData> {
                 ColliderMesh {
                     mesh: prop_data.collider.clone(),
                     rb: RigidBody::Fixed,
-                    membership: OBJECTS,
+                    membership: CollisionLayer::None,
                 },
             ));
         });
@@ -92,7 +92,7 @@ fn on_preview_place(
             ColliderMesh {
                 mesh: prop_data.collider.clone(),
                 rb: RigidBody::Fixed,
-                membership: OBJECTS,
+                membership: CollisionLayer::Object,
             },
         ));
     }

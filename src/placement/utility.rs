@@ -77,11 +77,30 @@ pub fn handle_mesh_changes(
     }
 }
 
+/// Divisible layers for different collision detections
+#[derive(Clone, Copy)]
+pub enum CollisionLayer {
+    None,
+    Ground,
+    Object,
+}
+
+impl From<CollisionLayer> for Group {
+    fn from(value: CollisionLayer) -> Self {
+        match value {
+            CollisionLayer::None => Group::NONE,
+            CollisionLayer::Ground => Group::GROUP_1,
+            CollisionLayer::Object => Group::GROUP_2,
+        }
+    }
+}
+
+/// Component that allows a single Bevy mesh to be used as a collider
 #[derive(Component)]
 pub struct ColliderMesh {
     pub mesh: Handle<Mesh>,
     pub rb: RigidBody,
-    pub membership: Group,
+    pub membership: CollisionLayer,
 }
 
 pub fn handle_collider_changes(
@@ -97,7 +116,7 @@ pub fn handle_collider_changes(
         commands.entity(entity).insert((
             collider_component.rb,
             collider,
-            CollisionGroups::new(collider_component.membership, Group::ALL),
+            CollisionGroups::new(collider_component.membership.into(), Group::ALL),
         ));
     }
 }

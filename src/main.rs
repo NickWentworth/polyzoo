@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use placement::utility::ColliderMesh;
+use placement::utility::{ColliderMesh, CollisionLayer};
 
 mod camera;
 mod objects;
@@ -61,10 +61,6 @@ impl CurrencyFormat for Currency {
     }
 }
 
-// collision groups
-const GROUND: Group = Group::GROUP_1;
-const OBJECTS: Group = Group::GROUP_2;
-
 fn setup_demo_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -91,7 +87,7 @@ fn setup_demo_scene(
         ColliderMesh {
             mesh: ground_mesh,
             rb: RigidBody::Fixed,
-            membership: GROUND,
+            membership: CollisionLayer::Ground,
         },
     ));
 }
