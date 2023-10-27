@@ -5,8 +5,8 @@ use bevy::{
     reflect::{TypePath, TypeUuid},
 };
 
-pub struct BarrierPlugin;
-impl Plugin for BarrierPlugin {
+pub struct BarrierDataPlugin;
+impl Plugin for BarrierDataPlugin {
     fn build(&self, app: &mut App) {
         app.add_asset::<BarrierData>()
             .init_resource::<BarrierLoader>();

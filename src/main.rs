@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use placement::utility::{ColliderMesh, CollisionLayer};
+use objects::utility::{ColliderMesh, CollisionLayer};
 
 mod camera;
 mod objects;

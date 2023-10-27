@@ -2,28 +2,13 @@ use crate::{camera::CursorRaycast, Currency};
 use bevy::prelude::*;
 use std::sync::Arc;
 
-mod barrier_placement;
-mod prop_placement;
-pub mod utility;
-
 pub struct PlacementPlugin;
 impl Plugin for PlacementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            prop_placement::PropPlacementPlugin,
-            barrier_placement::BarrierPlacementPlugin,
-        ))
-        .add_event::<ChangePreview>()
-        .add_event::<ClearPreview>()
-        .add_event::<PlacePreview>()
-        .add_systems(Update, (on_preview_change, on_escape_press, on_click))
-        .add_systems(
-            Update,
-            (
-                utility::handle_mesh_changes,
-                utility::handle_collider_changes,
-            ),
-        );
+        app.add_event::<ChangePreview>()
+            .add_event::<ClearPreview>()
+            .add_event::<PlacePreview>()
+            .add_systems(Update, (on_preview_change, on_escape_press, on_click));
     }
 }
 
@@ -40,7 +25,7 @@ pub trait PreviewData: Send + Sync + 'static {
 
 /// Component that should exist on all preview entities, stores important required data for placement
 #[derive(Component)]
-struct Preview {
+pub struct Preview {
     pub cost: Currency,
 }
 
@@ -57,7 +42,7 @@ pub struct ClearPreview;
 
 /// Event sent to previewing systems to place their previews if they exist
 #[derive(Event)]
-struct PlacePreview;
+pub struct PlacePreview;
 
 fn on_preview_change(
     mut commands: Commands,

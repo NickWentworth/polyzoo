@@ -1,71 +1,14 @@
-use super::{
-    utility::{ColliderMesh, CollisionLayer, RenderGltf, RenderGltfMode},
-    PlacePreview, Preview, PreviewData,
+use super::components::{BarrierFence, BarrierPost};
+use crate::{
+    camera::CursorRaycast,
+    objects::{
+        utility::{ColliderMesh, CollisionLayer, RenderGltf, RenderGltfMode},
+        BarrierData, ObjectBundle,
+    },
+    placement::{PlacePreview, Preview, PreviewData},
 };
-use crate::{camera::CursorRaycast, objects::BarrierData};
 use bevy::{ecs::system::SystemParam, prelude::*};
 use bevy_rapier3d::prelude::*;
-
-#[derive(Bundle)]
-pub struct ObjectBundle<O: Component> {
-    pub object: O,
-    pub spatial: SpatialBundle,
-    pub gltf: RenderGltf,
-    pub collider: ColliderMesh,
-}
-
-/// Instance of a barrier's post in the world
-#[derive(Component, Clone)]
-pub struct BarrierPost {
-    data: Handle<BarrierData>,
-    /// List of all connecting fence entities
-    fences: Vec<Entity>,
-}
-
-/// Instance of a barrier's fence in the world
-#[derive(Component, Clone)]
-pub struct BarrierFence {
-    data: Handle<BarrierData>,
-    /// Connection between posts that this fence serves
-    connection: [Entity; 2],
-}
-
-/// Marks a fence as changed if either of its connected posts are moved
-fn mark_fence_movement(
-    moved_posts: Query<&BarrierPost, Changed<Transform>>,
-    mut fences: Query<&mut BarrierFence>,
-) {
-    for moved_post in moved_posts.iter() {
-        for fence_entity in moved_post.fences.iter() {
-            if let Ok(mut fence) = fences.get_mut(*fence_entity) {
-                fence.set_changed();
-            }
-        }
-    }
-}
-
-/// Handles adjusting the fence's transform if its `BarrierFence` component has been changed
-fn handle_fence_movement(
-    mut moved_fences: Query<(&BarrierFence, &mut Transform), Changed<BarrierFence>>,
-    all_posts: Query<&Transform, (With<BarrierPost>, Without<BarrierFence>)>,
-) {
-    for (fence, mut transform) in moved_fences.iter_mut() {
-        // get positions of both posts
-        let Ok(from) = all_posts.get(fence.connection[0]).map(|t| t.translation) else { continue };
-        let Ok(to) = all_posts.get(fence.connection[1]).map(|t| t.translation) else { continue };
-
-        // and calculate transform values for this fence
-        let midpoint = from.lerp(to, 0.5);
-        let angle = -f32::atan2(to.z - from.z, to.x - from.x);
-        let distance = from.distance(to);
-
-        *transform = Transform {
-            translation: midpoint,
-            rotation: Quat::from_rotation_y(angle),
-            scale: Vec3::new(distance, 1.0, 1.0),
-        };
-    }
-}
 
 #[derive(Clone)]
 pub struct BarrierPlacementPlugin;
@@ -77,14 +20,6 @@ impl Plugin for BarrierPlacementPlugin {
                 handle_preview_movement,
                 update_fence_preview_cost,
                 on_preview_place,
-            ),
-        )
-        // TEMP - temporary systems for fence movement that should be general for all fences, these should go elsewhere
-        .add_systems(
-            Update,
-            (
-                mark_fence_movement,
-                handle_fence_movement.after(mark_fence_movement),
             ),
         );
     }

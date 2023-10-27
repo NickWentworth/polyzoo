@@ -5,8 +5,8 @@ use bevy::{
     reflect::{TypePath, TypeUuid},
 };
 
-pub struct PropPlugin;
-impl Plugin for PropPlugin {
+pub struct PropDataPlugin;
+impl Plugin for PropDataPlugin {
     fn build(&self, app: &mut App) {
         app.add_asset::<PropData>().init_resource::<PropLoader>();
     }

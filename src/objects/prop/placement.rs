@@ -1,17 +1,14 @@
-use super::{
-    utility::{ColliderMesh, CollisionLayer, RenderGltf, RenderGltfMode},
-    PlacePreview, Preview, PreviewData,
+use super::components::Prop;
+use crate::{
+    camera::CursorRaycast,
+    objects::{
+        utility::{ColliderMesh, CollisionLayer, RenderGltf, RenderGltfMode},
+        ObjectBundle, PropData,
+    },
+    placement::{PlacePreview, Preview, PreviewData},
 };
-use crate::{camera::CursorRaycast, objects::PropData};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-
-// TODO - this should probably go elsewhere
-/// Instance of a prop in the world
-#[derive(Component)]
-pub struct Prop {
-    data: Handle<PropData>,
-}
 
 pub struct PropPlacementPlugin;
 impl Plugin for PropPlacementPlugin {
@@ -31,19 +28,21 @@ impl PreviewData for Handle<PropData> {
 
             // spawn prop preview
             world.spawn((
-                SpatialBundle::default(),
-                Prop { data: prop_handle },
+                ObjectBundle {
+                    object: Prop { data: prop_handle },
+                    spatial: SpatialBundle::default(),
+                    gltf: RenderGltf {
+                        handle: prop_data.model.clone(),
+                        mode: RenderGltfMode::Preview,
+                    },
+                    collider: ColliderMesh {
+                        mesh: prop_data.collider.clone(),
+                        rb: RigidBody::Fixed,
+                        membership: CollisionLayer::None,
+                    },
+                },
                 Preview {
                     cost: prop_data.cost,
-                },
-                RenderGltf {
-                    handle: prop_data.model.clone(),
-                    mode: RenderGltfMode::Preview,
-                },
-                ColliderMesh {
-                    mesh: prop_data.collider.clone(),
-                    rb: RigidBody::Fixed,
-                    membership: CollisionLayer::None,
                 },
             ));
         });
@@ -77,23 +76,23 @@ fn on_preview_place(
         let Ok((preview, transform)) = preview.get_single() else { return };
         let Some(prop_data) = props.get(&preview.data) else { return };
 
-        commands.spawn((
-            SpatialBundle {
+        commands.spawn(ObjectBundle {
+            object: Prop {
+                data: preview.data.clone(),
+            },
+            spatial: SpatialBundle {
                 transform: transform.clone(),
                 ..default()
             },
-            Prop {
-                data: preview.data.clone(),
-            },
-            RenderGltf {
+            gltf: RenderGltf {
                 handle: prop_data.model.clone(),
                 mode: RenderGltfMode::Regular,
             },
-            ColliderMesh {
+            collider: ColliderMesh {
                 mesh: prop_data.collider.clone(),
                 rb: RigidBody::Fixed,
                 membership: CollisionLayer::Object,
             },
-        ));
+        });
     }
 }

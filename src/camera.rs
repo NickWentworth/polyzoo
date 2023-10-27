@@ -1,4 +1,4 @@
-use crate::{placement::utility::CollisionLayer, ui::UiQuery};
+use crate::{objects::utility::CollisionLayer, ui::UiQuery};
 use bevy::{
     ecs::system::SystemParam,
     input::mouse::{MouseMotion, MouseWheel},
