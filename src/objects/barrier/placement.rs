@@ -321,8 +321,15 @@ fn on_preview_place(
                     },
                 });
 
-                // update preview fence's first connection
+                // store the post that the preview fence was connecting to before overwriting
+                // then update preview fence's first connection
+                let previous_post_connection = preview_fence.connection[0];
                 preview_fence.connection[0] = placed_post;
+
+                // add the permanent fence entity as a fence within the old preview's connecting post
+                let mut posts = set.p1();
+                let (mut previous_post, _) = posts.get_mut(previous_post_connection).unwrap();
+                previous_post.fences.push(placed_fence);
 
                 // handle different behaviors if snapping to a placed fence post
                 let maybe_snap_post = set.p0().snap_post();
@@ -347,7 +354,7 @@ fn on_preview_place(
                         commands.entity(placed_post).insert(ObjectBundle {
                             object: BarrierPost {
                                 data: barrier_data_handle.clone(),
-                                fences: vec![],
+                                fences: vec![placed_fence],
                             },
                             spatial: SpatialBundle {
                                 transform: *preview_post_transform,
