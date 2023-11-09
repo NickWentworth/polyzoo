@@ -238,141 +238,140 @@ fn on_preview_place(
         let placed_post = commands.spawn_empty().id();
         let placed_fence = commands.spawn_empty().id();
 
+        let mut placed_post_bundle = ObjectBundle {
+            object: BarrierPost {
+                data: barrier_data_handle.clone(),
+                fences: vec![],
+            },
+            spatial: SpatialBundle::default(),
+            gltf: RenderGltf {
+                handle: barrier_data.post_model.clone(),
+                mode: RenderGltfMode::Regular,
+            },
+            collider: ColliderMesh {
+                mesh: barrier_data.post_collider.clone(),
+                rb: RigidBody::Fixed,
+                membership: CollisionLayer::Object,
+            },
+        };
+
+        let mut placed_fence_bundle = ObjectBundle {
+            object: BarrierFence {
+                data: barrier_data_handle.clone(),
+                connection: [placed_post, placed_post], // IMPORTANT: overwrite this with whatever the fence should be connected to
+            },
+            spatial: SpatialBundle::default(),
+            gltf: RenderGltf {
+                handle: barrier_data.fence_model.clone(),
+                mode: RenderGltfMode::Regular,
+            },
+            collider: ColliderMesh {
+                mesh: barrier_data.fence_collider.clone(),
+                rb: RigidBody::Fixed,
+                membership: CollisionLayer::Object,
+            },
+        };
+
         match set.p0().preview_status() {
-            BarrierPreviewStatus::None => (),
+            BarrierPreviewStatus::None => {
+                // shouldn't reach here, but despawn the placed post and fence regardless
+                commands.entity(placed_post).despawn_recursive();
+                commands.entity(placed_fence).despawn_recursive();
+            }
 
             // when placing a single post, spawn in an additional fence preview afterwards
             BarrierPreviewStatus::Post { post } => {
                 let mut posts = set.p1();
                 let (mut preview_post, preview_post_transform) = posts.get_mut(post).unwrap();
 
-                // spawn permanent post entity
-                commands.entity(placed_post).insert(ObjectBundle {
-                    object: BarrierPost {
-                        data: barrier_data_handle.clone(),
-                        fences: vec![],
-                    },
-                    spatial: SpatialBundle {
-                        transform: *preview_post_transform,
-                        ..default()
-                    },
-                    gltf: RenderGltf {
-                        handle: barrier_data.post_model.clone(),
-                        mode: RenderGltfMode::Regular,
-                    },
-                    collider: ColliderMesh {
-                        mesh: barrier_data.post_collider.clone(),
-                        rb: RigidBody::Fixed,
-                        membership: CollisionLayer::Object,
-                    },
-                });
-
-                // spawn preview fence entity
-                commands.entity(placed_fence).insert((
-                    ObjectBundle {
-                        object: BarrierFence {
-                            data: barrier_data_handle.clone(),
-                            connection: [placed_post, post],
-                        },
-                        spatial: SpatialBundle::default(),
-                        gltf: RenderGltf {
-                            handle: barrier_data.fence_model.clone(),
-                            mode: RenderGltfMode::Preview,
-                        },
-                        collider: ColliderMesh {
-                            mesh: barrier_data.fence_collider.clone(),
-                            rb: RigidBody::Fixed,
-                            membership: CollisionLayer::None,
-                        },
-                    },
-                    Preview {
-                        cost: 0.0, // will be updated after fence's transform is updated
-                    },
-                ));
-
-                // finally link preview post with preview fence
+                // link preview post with preview fence
                 preview_post.fences = vec![placed_fence];
+
+                // set permanent placed post's transform to preview's transform
+                placed_post_bundle.spatial.transform = *preview_post_transform;
+
+                // set placed fence into preview mode
+                commands.entity(placed_fence).insert(Preview { cost: 0.0 });
+                placed_fence_bundle.gltf.mode = RenderGltfMode::Preview;
+                placed_fence_bundle.collider.membership = CollisionLayer::None;
+
+                // connect placed fence from permanently placed post to preview post
+                placed_fence_bundle.object.connection = [placed_post, post];
             }
 
             // when connecting, properly handle snapping
             BarrierPreviewStatus::Connecting { post, fence } => {
-                // spawn fence regardless
+                // always spawn in a permanently placed fence
                 let mut fences = set.p2();
                 let (mut preview_fence, preview_fence_transform) = fences.get_mut(fence).unwrap();
 
-                // spawn permanent fence entity
-                commands.entity(placed_fence).insert(ObjectBundle {
-                    object: BarrierFence {
-                        data: barrier_data_handle.clone(),
-                        connection: [preview_fence.connection[0], placed_post],
-                    },
-                    spatial: SpatialBundle {
-                        transform: preview_fence_transform.clone(),
-                        ..default()
-                    },
-                    gltf: RenderGltf {
-                        handle: barrier_data.fence_model.clone(),
-                        mode: RenderGltfMode::Regular,
-                    },
-                    collider: ColliderMesh {
-                        mesh: barrier_data.fence_collider.clone(),
-                        rb: RigidBody::Fixed,
-                        membership: CollisionLayer::Object,
-                    },
-                });
+                placed_fence_bundle.spatial.transform = *preview_fence_transform;
+                placed_fence_bundle.object.connection[0] = preview_fence.connection[0];
 
-                // store the post that the preview fence was connecting to before overwriting
-                // then update preview fence's first connection
-                let previous_post_connection = preview_fence.connection[0];
+                // ensure the previous post the preview fence was connected to has its fences updated properly
+                // store this for later use before overwriting the preview fence
+                let previous_post_entity = preview_fence.connection[0];
                 preview_fence.connection[0] = placed_post;
 
-                // add the permanent fence entity as a fence within the old preview's connecting post
+                // connect previous post with the placed permanent fence
                 let mut posts = set.p1();
-                let (mut previous_post, _) = posts.get_mut(previous_post_connection).unwrap();
+                let (mut previous_post, _) = posts.get_mut(previous_post_entity).unwrap();
                 previous_post.fences.push(placed_fence);
 
-                // handle different behaviors if snapping to a placed fence post
-                let maybe_snap_post = set.p0().snap_post();
-                let mut posts = set.p1();
+                match set.p0().snap_post() {
+                    // if there is no post to snap to, spawn a permanent post and fence
+                    None => {
+                        // connect placed fence to placed post
+                        placed_fence_bundle.object.connection[1] = placed_post;
 
-                match maybe_snap_post {
-                    // if a post is to be snapped to, don't spawn in a new post
-                    Some(snap_post_entity) => {
-                        // don't spawn a new post and despawn the fence preview
-                        commands.entity(placed_post).despawn_recursive();
-                        commands.entity(fence).despawn_recursive();
+                        // update preview post's fence to be the permanent placed fence
+                        let posts = set.p1();
+                        let (_, preview_post_transform) = posts.get(post).unwrap();
+                        // preview_post.fences = vec![placed_fence];
 
-                        // update snap post's data to connect with spawned fence
-                        let (mut snap_post, _) = posts.get_mut(snap_post_entity).unwrap();
-                        snap_post.fences.push(placed_fence);
+                        placed_post_bundle.object.fences = vec![placed_fence];
+                        placed_post_bundle.spatial.transform = *preview_post_transform;
                     }
 
-                    // if no snap post, spawn a post like regular
-                    None => {
-                        let (_, preview_post_transform) = posts.get(post).unwrap();
+                    // if there is a snap post, connect everything as required
+                    Some(snap_post_entity) => {
+                        // connect placed fence to snap post
+                        placed_fence_bundle.object.connection[1] = snap_post_entity;
 
-                        commands.entity(placed_post).insert(ObjectBundle {
-                            object: BarrierPost {
-                                data: barrier_data_handle.clone(),
-                                fences: vec![placed_fence],
-                            },
-                            spatial: SpatialBundle {
-                                transform: *preview_post_transform,
-                                ..default()
-                            },
-                            gltf: RenderGltf {
-                                handle: barrier_data.post_model.clone(),
-                                mode: RenderGltfMode::Regular,
-                            },
-                            collider: ColliderMesh {
-                                mesh: barrier_data.post_collider.clone(),
-                                rb: RigidBody::Fixed,
-                                membership: CollisionLayer::Object,
-                            },
-                        });
+                        // cleanup preview post's fences
+                        let mut posts = set.p1();
+                        let (mut preview_post, _) = posts.get_mut(post).unwrap();
+                        preview_post.fences = vec![];
+
+                        // add placed fence as a connection to the snap post
+                        let (mut snap_post, _) = posts.get_mut(snap_post_entity).unwrap();
+                        snap_post.fences.push(placed_fence);
+
+                        // finally despawn the placed post and fence preview to start a new barrier cycle
+                        commands.entity(placed_post).despawn_recursive();
+                        commands.entity(fence).despawn_recursive();
                     }
                 }
             }
         }
+
+        // finally insert general object bundles into post and fence entities, if they still exist
+        commands.try_insert(placed_post, placed_post_bundle);
+        commands.try_insert(placed_fence, placed_fence_bundle);
+    }
+}
+
+trait TryInsertCommand {
+    fn try_insert(&mut self, entity: Entity, bundle: impl Bundle);
+}
+
+impl<'w, 's> TryInsertCommand for Commands<'w, 's> {
+    /// Tries to insert the given `Bundle` into the `Entity`, checking if it has been despawned before inserting
+    fn try_insert(&mut self, entity: Entity, bundle: impl Bundle) {
+        self.add(move |world: &mut World| {
+            if let Some(mut entity_ref) = world.get_entity_mut(entity) {
+                entity_ref.insert(bundle);
+            }
+        })
     }
 }
