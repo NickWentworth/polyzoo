@@ -1,4 +1,4 @@
-use super::components::{BarrierFence, BarrierPost};
+use super::components::{BarrierFence, BarrierPost, PossibleBarrierCycle};
 use crate::{
     camera::CursorRaycast,
     objects::{
@@ -225,6 +225,8 @@ fn on_preview_place(
     mut placements: EventReader<PlacePreview>,
     barriers: Res<Assets<BarrierData>>,
 
+    mut possible_cycles: EventWriter<PossibleBarrierCycle>,
+
     mut set: ParamSet<(
         BarrierPreviewHelper,
         Query<(&mut BarrierPost, &Transform)>,
@@ -327,7 +329,6 @@ fn on_preview_place(
                         // update preview post's fence to be the permanent placed fence
                         let posts = set.p1();
                         let (_, preview_post_transform) = posts.get(post).unwrap();
-                        // preview_post.fences = vec![placed_fence];
 
                         placed_post_bundle.object.fences = vec![placed_fence];
                         placed_post_bundle.spatial.transform = *preview_post_transform;
@@ -346,6 +347,11 @@ fn on_preview_place(
                         // add placed fence as a connection to the snap post
                         let (mut snap_post, _) = posts.get_mut(snap_post_entity).unwrap();
                         snap_post.fences.push(placed_fence);
+
+                        // a new cycle could have been formed
+                        possible_cycles.send(PossibleBarrierCycle {
+                            root: snap_post_entity,
+                        });
 
                         // finally despawn the placed post and fence preview to start a new barrier cycle
                         commands.entity(placed_post).despawn_recursive();
