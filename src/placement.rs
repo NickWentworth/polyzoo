@@ -78,7 +78,7 @@ fn on_click(
     cursor: CursorRaycast,
     mut placements: EventWriter<PlacePreview>,
 ) {
-    // TODO - improve validity check, should be handled independently by each placement system
+    // TODO: improve validity check, should be handled independently by each placement system
     // no need to send place event if there are no previews
     if mouse.just_pressed(MouseButton::Left) && cursor.ground_point().is_some() {
         placements.send(PlacePreview);

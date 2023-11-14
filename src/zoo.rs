@@ -18,7 +18,7 @@ pub struct Zoo {
 
 impl Default for Zoo {
     fn default() -> Self {
-        // TEMP - giving an initial balance for testing
+        // TEMP: giving an initial balance for testing
         Self { balance: 5000.0 }
     }
 }

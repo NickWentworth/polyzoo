@@ -77,7 +77,7 @@ pub fn on_object_selection(
                         );
                     });
 
-                // TODO - body displaying further information based on object
+                // TODO: body displaying further information based on object
                 parent
                     .spawn(NodeBundle {
                         style: Style {

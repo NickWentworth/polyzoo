@@ -55,8 +55,8 @@ fn handle_camera(
 ) {
     let (mut controller, mut transform) = camera_query.single_mut();
 
-    // TODO - add some smoothing to the movement
-    // TODO - prevent camera from orbiting too far and going upside down or inside the floor
+    // TODO: add some smoothing to the movement
+    // TODO: prevent camera from orbiting too far and going upside down or inside the floor
 
     // calculate and apply orbiting
     if mouse_buttons.pressed(ORBIT) {
@@ -106,7 +106,7 @@ fn handle_camera(
         transform.translation += zoom * scale;
     }
 
-    // TEMP - to show the location of the controller's pivot point
+    // TEMP: to show the location of the controller's pivot point
     gizmos.sphere(controller.pivot, Quat::IDENTITY, 0.1, Color::WHITE);
 }
 

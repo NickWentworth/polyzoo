@@ -54,7 +54,7 @@ struct BarrierLoader {
 
 impl FromWorld for BarrierLoader {
     fn from_world(world: &mut World) -> Self {
-        // TODO - read from asset file in json or ron format
+        // TODO: read from asset file in json or ron format
         let asset_server = world.resource::<AssetServer>();
         let data = [BarrierData {
             name: "Concrete Barrier".into(),

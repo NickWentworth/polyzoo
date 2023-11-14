@@ -27,7 +27,7 @@ impl Plugin for ToolbarPlugin {
     }
 }
 
-// TODO - add information panel to buy menu
+// TODO: add information panel to buy menu
 
 #[derive(Component)]
 pub struct ZooBalanceText;
@@ -106,7 +106,7 @@ pub(super) fn setup_toolbar(
             parent
                 .spawn((popup_menu.clone(), BuyMenu::Nature))
                 .with_children(|parent: &mut ChildBuilder<'_, '_, '_>| {
-                    // TODO - nature should probably be sorted by biome when its added
+                    // TODO: nature should probably be sorted by biome when its added
                     // sort props by name
                     let mut sorted_props = props.iter().collect::<Vec<_>>();
                     sorted_props.sort_by_key(|(_, prop)| prop.name());
@@ -258,7 +258,7 @@ fn buy_button(
             // placeable object's text
             parent.spawn(theme.dark_text(&displayable.text(), 16.0));
 
-            // TEMP - name and other info can be displayed in a side panel, image and text is enough for the button
+            // TEMP: name and other info can be displayed in a side panel, image and text is enough for the button
             parent.spawn(theme.dark_text(&displayable.name(), 16.0));
         })
         .id()

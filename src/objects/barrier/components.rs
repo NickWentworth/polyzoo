@@ -91,7 +91,7 @@ struct BarrierCycleUtil<'w, 's> {
 }
 
 impl<'w, 's> BarrierCycleUtil<'w, 's> {
-    // TODO - return a list of entities instead of just true/false
+    // TODO: return a list of entities instead of just true/false
     /// Runs DFS on the barrier's implicit graph to detect if a cycle has been formed
     fn has_cycle(&self, root: Entity) -> bool {
         let mut visited = HashSet::new();
