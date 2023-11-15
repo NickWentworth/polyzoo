@@ -1,6 +1,8 @@
-use super::BarrierData;
-use bevy::{ecs::system::SystemParam, prelude::*};
-use std::collections::HashSet;
+use super::{
+    cycle::{BarrierCycleUtil, UndirectedGraph},
+    BarrierData,
+};
+use bevy::prelude::*;
 
 pub struct BarrierComponentPlugin;
 impl Plugin for BarrierComponentPlugin {
@@ -76,75 +78,12 @@ fn on_possible_cycle(
     cycle_util: BarrierCycleUtil,
 ) {
     for possible_cycle in possible_cycles.iter() {
-        match cycle_util.has_cycle(possible_cycle.root) {
-            true => println!("Cycle found!"),
-            false => println!("Cycle not found!"),
-        }
-    }
-}
-
-/// Utility system parameter used for detecting cycles within the barriers
-#[derive(SystemParam)]
-struct BarrierCycleUtil<'w, 's> {
-    posts: Query<'w, 's, &'static BarrierPost>,
-    fences: Query<'w, 's, &'static BarrierFence>,
-}
-
-impl<'w, 's> BarrierCycleUtil<'w, 's> {
-    // TODO: return a list of entities instead of just true/false
-    /// Runs DFS on the barrier's implicit graph to detect if a cycle has been formed
-    fn has_cycle(&self, root: Entity) -> bool {
-        let mut visited = HashSet::new();
-        self.dfs(root, None, &mut visited)
-    }
-
-    /// Recursively searches through the barrier connection graph, returning if there is a cycle
-    fn dfs(&self, current: Entity, parent: Option<Entity>, visited: &mut HashSet<Entity>) -> bool {
-        visited.insert(current);
-
-        for neighbor in self.neighbors(current) {
-            // don't travel backwards to the parent post
-            if Some(neighbor) == parent {
-                continue;
+        match cycle_util.get_cycle(possible_cycle.root) {
+            Some(list) => {
+                println!("Cycle found! {} barriers in cycle:", list.len());
+                println!("{:?}", list);
             }
-
-            if visited.contains(&neighbor) {
-                // if the neighbor has been visited, there is a cycle
-                return true;
-            } else {
-                // if not, continue checking the neighbor's neighbors
-                if self.dfs(neighbor, Some(current), visited) {
-                    return true;
-                }
-            }
-        }
-
-        false
-    }
-
-    /// Returns all neighboring posts to the given post entity
-    ///
-    /// Returns an empty list if there are no neighbors or if the given entity does not contain a `BarrierPost` component
-    fn neighbors(&self, post_entity: Entity) -> Vec<Entity> {
-        match self.posts.get(post_entity) {
-            Ok(post) => {
-                // get all neighboring posts from this post's fence connections
-                post.fences
-                    .iter()
-                    .filter_map(|&fence_entity| self.fences.get(fence_entity).ok())
-                    .filter_map(|fence| {
-                        // return the connection that is not the given post
-                        fence
-                            .connection
-                            .iter()
-                            .find(|&&connect| connect != post_entity)
-                            .copied()
-                    })
-                    .collect::<Vec<_>>()
-            }
-
-            // if the entity given is not a post, return an empty list
-            Err(_) => vec![],
+            None => println!("Cycle not found"),
         }
     }
 }
